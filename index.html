@@ -234,6 +234,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; heigh
             <button class="os-btn" id="nav-btn-browser" onclick="playClickSound(); showStaticModule('browser')">İnternet Tarayıcısı</button>
             <button class="os-btn" id="nav-btn-shop" onclick="playClickSound(); showStaticModule('shop')">Puan Mağazası</button>
             <button class="os-btn" id="nav-btn-settings" onclick="playClickSound(); showStaticModule('settings')">Ayarlar</button>
+            <button class="os-btn" id="nav-btn-support" onclick="playClickSound(); openSupportChannel()">Destek</button>
         </div>
         <div class="right-pane">
             <div class="apps-window">
@@ -280,6 +281,10 @@ const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+
+function openSupportChannel() {
+    require('electron').shell.openExternal('https://www.youtube.com/@12ya%C5%9F%C4%B1ndakigeli%C5%9Ftirici');
+}
 const APP_ROOT = __dirname;
 const INTRO_PHASES = ["status", "lore", "system", "hold_before_delete", "delete_lore", "delete_status", "hold_after_sys", "delete_sys", "loading_bar", "hold_ready", "opening_text", "cinematic_darkness"];
 const DEFAULT_BOOT_MESSAGES = {
@@ -327,7 +332,7 @@ let currentLanguage = localStorage.getItem('smileos_language') ?? 'tr';
 const TRANSLATIONS = {
     tr: {
         navApps: 'Uygulamalar', navMusic: 'Müzikler', navBrowser: 'İnternet Tarayıcısı',
-        navShop: 'Puan Mağazası', navSettings: 'Ayarlar',
+        navShop: 'Puan Mağazası', navSettings: 'Ayarlar', navSupport: 'Destek',
         tipOfDay: 'Günün İpucusu',
         systemLoadedHint: 'Sistem başarıyla yüklendi. Sol menüden bir modül seçin.',
         sidebarModules: '[ MODÜLLER ]', sidebarGames: '➔ OYUNLAR', sidebarExtra: '➔ EKSTRA',
@@ -379,7 +384,7 @@ const TRANSLATIONS = {
     },
     en: {
         navApps: 'Applications', navMusic: 'Music', navBrowser: 'Web Browser',
-        navShop: 'Points Shop', navSettings: 'Settings',
+        navShop: 'Points Shop', navSettings: 'Settings', navSupport: 'Support',
         tipOfDay: 'Tip of the Day',
         systemLoadedHint: 'System loaded successfully. Select a module from the left menu.',
         sidebarModules: '[ MODULES ]', sidebarGames: '➔ GAMES', sidebarExtra: '➔ EXTRA',
@@ -446,6 +451,7 @@ function applyStaticTranslations() {
     setText('nav-btn-browser', t('navBrowser'));
     setText('nav-btn-shop', t('navShop'));
     setText('nav-btn-settings', t('navSettings'));
+    setText('nav-btn-support', t('navSupport'));
     setText('sidebar-modules-title', t('sidebarModules'));
     setText('sidebar-btn-games', t('sidebarGames'));
     setText('sidebar-btn-extra', t('sidebarExtra'));
