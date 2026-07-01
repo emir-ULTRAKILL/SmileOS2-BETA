@@ -1,0 +1,1868 @@
+!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SmileOS 2.0</title>
+<link href="https://fonts.cdnfonts.com/css/vcr-osd-mono" rel="stylesheet">
+<style>
+:root { --dynamic-theme-color: #b01616; }
+body { margin: 0; background: black; color: #e5e5e5; font-family: "VCR OSD Mono", monospace; overflow: hidden; cursor: pointer; user-select: none; }
+body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.03), rgba(0,0,0,0.12) 3px); z-index: 999; }
+.flicker-active { animation: flicker 2.5s infinite; }
+@keyframes flicker { 0% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: 0.9; } 94% { opacity: 1; } 97% { opacity: 0.93; } 100% { opacity: 1; } }
+@keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+.glitch-word { color: white; text-shadow: 2px 0 red, -2px 0 cyan, 0 0 8px white; }
+#start-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; display: flex; justify-content: center; align-items: center; z-index: 10000; font-size: 40px; color: red; }
+#start-screen span { animation: pulse 1.5s infinite; }
+#boot { position: absolute; top: 6vh; left: 60px; font-size: 36px; color: red; white-space: pre; line-height: 2.4; }
+#lore { position: absolute; top: calc(6vh + 380px); left: 60px; font-size: 34px; color: red; white-space: pre; line-height: 2.3; }
+#sys { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: red; white-space: pre; text-align: center; line-height: 2.6; }
+#loading-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 38px; color: red; text-align: center; white-space: pre; display: none; line-height: 2; }
+#system-opening-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 52px; color: white; text-shadow: 0 0 15px red; text-align: center; white-space: nowrap; display: none; z-index: 20; }
+#smile-os-container { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95vw; height: 90vh; background: #2b2b2b; border: 4px solid #1a1a1a; box-shadow: inset 2px 2px 0px #555, inset -2px -2px 0px #111, 0 20px 40px rgba(0,0,0,0.8); box-sizing: border-box; }
+.window-header { background: var(--dynamic-theme-color); height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 4px solid #1a1a1a; transition: background 0.2s; }
+.window-title { font-size: 26px; color: white; display: flex; align-items: center; gap: 12px; }
+.window-controls { display: flex; gap: 8px; align-items: center; }
+.win-btn { width: 32px; height: 32px; background: transparent; border: 2px solid white; color: white; font-family: inherit; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.1s; }
+.win-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.window-body { display: flex; height: calc(100% - 54px); padding: 30px; box-sizing: border-box; gap: 30px; }
+.left-pane { width: 35%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; height: 100%; }
+.brand-logo { font-size: 58px; color: white; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px; text-align: center; }
+.brand-logo span { font-size: 22px; background: linear-gradient(to right, red, orange, yellow, green, blue, purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-left: 5px; }
+.os-btn { width: 95%; background: #3e3e3e; border: 4px solid #1a1a1a; color: #e5e5e5; font-family: inherit; font-size: 28px; padding: 22px 0; text-align: center; cursor: pointer; box-shadow: inset 2px 2px 0px #666, inset -2px -2px 0px #222; transition: background 0.1s; }
+.os-btn:hover { background: #4a4a4a; }
+.right-pane { width: 65%; height: 100%; }
+.apps-window { width: 100%; height: 100%; border: 4px solid #1a1a1a; background: #1e1e1e; box-shadow: inset 2px 2px 0px #444; display: flex; flex-direction: column; }
+.apps-split-body { display: flex; width: 100%; height: calc(100% - 45px); background: #0d0d0d; box-sizing: border-box; min-height: 0; overflow: hidden; }
+.apps-mini-left { width: 40%; border-right: 4px solid #1a1a1a; display: flex; flex-direction: column; justify-content: center; gap: 20px; padding: 20px; box-sizing: border-box; background: #141414; }
+.mini-title { font-size: 16px; color: #666; text-align: center; margin-bottom: 10px; letter-spacing: 1px; }
+.sub-btn { width: 100%; background: #222; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 20px; padding: 16px; cursor: pointer; box-shadow: inset 1px 1px 0px #444; text-align: left; transition: 0.1s; }
+.sub-btn:hover { background: var(--dynamic-theme-color); box-shadow: 0 0 8px var(--dynamic-theme-color); }
+.apps-mini-right { width: 60%; height: 100%; padding: 30px; box-sizing: border-box; font-size: 24px; line-height: 1.6; color: #cccccc; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.apps-mini-right.settings-mode { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; cursor: default; }
+.apps-mini-right.shop-mode { padding: 0; justify-content: stretch; align-items: stretch; overflow: hidden; }
+.highlight-system { color: var(--dynamic-theme-color); transition: color 0.2s; }
+.game-btn { width: 90%; background: #1a1a1a; border: 3px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 24px; padding: 16px; cursor: pointer; box-shadow: inset 2px 2px 0px #444; transition: 0.1s; }
+.game-btn:hover { background: var(--dynamic-theme-color); box-shadow: 0 0 12px var(--dynamic-theme-color); }
+.setting-row { width: 90%; display: flex; justify-content: space-between; align-items: center; gap: 15px; margin: 5px 0; }
+.setting-label { font-size: 20px; color: #e5e5e5; text-align: left; letter-spacing: 1px; }
+.retro-select { background: #1a1a1a; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 18px; padding: 8px 12px; outline: none; cursor: pointer; width: 160px; transition: border-color 0.2s; }
+.retro-checkbox { width: 24px; height: 24px; accent-color: var(--dynamic-theme-color); cursor: pointer; }
+.volume-container { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.retro-slider { -webkit-appearance: none; width: 100%; height: 12px; background: #222; border: 2px solid var(--dynamic-theme-color); outline: none; transition: border-color 0.2s; }
+.retro-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: var(--dynamic-theme-color); cursor: pointer; border: 2px solid white; transition: background 0.2s; }
+/* Added for centering content */
+.content-center { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; gap: 15px; }
+.settings-scroll-panel { width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; padding: 18px 22px 56px; box-sizing: border-box; min-height: 0; cursor: default; }
+.settings-page-wrap { width: 100%; max-width: 680px; margin: 0 auto; }
+.browser-shell { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 12px; box-sizing: border-box; user-select: auto; cursor: default; text-align: left; }
+.browser-home { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; flex: 1; min-height: 0; }
+.browser-logo { font-size: 42px; font-weight: bold; letter-spacing: 2px; color: white; text-shadow: 0 0 12px var(--dynamic-theme-color); }
+.browser-logo span { color: var(--dynamic-theme-color); }
+.browser-search-row { display: flex; width: 90%; max-width: 520px; gap: 8px; }
+.browser-input { flex: 1; background: #111; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 16px; padding: 12px 14px; outline: none; cursor: text; user-select: text; box-shadow: inset 1px 1px 0 #333; }
+.browser-input::placeholder { color: #777; }
+.browser-go-btn, .browser-nav-btn { background: #222; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 14px; padding: 10px 14px; cursor: pointer; transition: 0.1s; white-space: nowrap; }
+.browser-go-btn:hover, .browser-nav-btn:hover { background: var(--dynamic-theme-color); }
+.browser-toolbar { display: flex; gap: 8px; align-items: center; width: 100%; }
+.browser-toolbar .browser-input { font-size: 14px; padding: 10px 12px; }
+.browser-webview { flex: 1; width: 100%; min-height: 0; border: 2px solid var(--dynamic-theme-color); background: #fff; display: none; }
+.browser-webview.active { display: flex; }
+.browser-hint { font-size: 14px; color: #888; letter-spacing: 1px; }
+.browser-mascot-wrap { display: flex; justify-content: center; align-items: center; margin-top: 4px; }
+.browser-mascot { max-width: 200px; max-height: 200px; width: auto; height: auto; cursor: pointer; user-select: none; transform-origin: center center; }
+.browser-mascot:hover { filter: drop-shadow(0 0 12px var(--dynamic-theme-color)); }
+@keyframes browser-mascot-wobble { 0%, 100% { transform: rotate(0deg) scale(1); } 20% { transform: rotate(-5deg) scale(1.05); } 40% { transform: rotate(4deg) scale(0.97); } 60% { transform: rotate(-3deg) scale(1.03); } 80% { transform: rotate(2deg) scale(1); } }
+.browser-mascot.wobble { animation: browser-mascot-wobble 0.5s ease-in-out; }
+.music-shell { width: 100%; height: 100%; display: flex; background: #0d0d0d; user-select: auto; cursor: default; text-align: left; min-height: 0; }
+.music-sidebar { width: 38%; border-right: 4px solid #1a1a1a; background: #141414; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; box-shadow: inset 2px 0 0 #222; }
+.music-main { flex: 1; background: #0d0d0d; padding: 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
+.music-panel-header { font-size: 16px; color: #666; text-align: center; letter-spacing: 1px; margin-bottom: 2px; }
+.music-status-bar { font-size: 14px; color: #888; letter-spacing: 1px; border: 2px solid #1a1a1a; background: #111; padding: 10px 12px; box-shadow: inset 1px 1px 0 #333; }
+.music-block-notice { display: none; margin-top: 8px; padding: 10px 12px; border: 2px solid #661111; background: #220808; color: #ff6666; font-size: 13px; letter-spacing: 1px; text-align: center; box-shadow: inset 1px 1px 0 #441111; }
+.music-create-row { display: flex; flex-direction: column; gap: 10px; }
+.music-input { width: 100%; background: #1a1a1a; border: 3px solid #1a1a1a; border-left-color: var(--dynamic-theme-color); border-right-color: var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 16px; padding: 12px 14px; outline: none; cursor: text; user-select: text; box-shadow: inset 2px 2px 0 #444; box-sizing: border-box; }
+.music-input::placeholder { color: #666; letter-spacing: 1px; }
+.music-btn { width: 100%; background: #222; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 18px; padding: 14px 16px; cursor: pointer; box-shadow: inset 1px 1px 0 #444; text-align: left; transition: 0.1s; letter-spacing: 1px; }
+.music-btn:hover { background: var(--dynamic-theme-color); box-shadow: 0 0 8px var(--dynamic-theme-color); }
+.music-btn-danger { border-color: #8b0000; color: #ffb3b3; }
+.music-btn-danger:hover { background: #8b0000; box-shadow: 0 0 8px #8b0000; }
+.music-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.music-btn-row .music-btn { width: auto; flex: 1; min-width: 120px; text-align: center; font-size: 16px; padding: 12px 10px; }
+.music-list { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 10px; min-height: 0; padding-right: 4px; }
+.music-playlist-item { width: 100%; background: #222; border: 2px solid #333; color: white; font-family: inherit; font-size: 18px; padding: 14px 16px; cursor: pointer; box-shadow: inset 1px 1px 0 #444; text-align: left; transition: 0.1s; display: flex; justify-content: space-between; align-items: center; gap: 10px; letter-spacing: 1px; }
+.music-playlist-item:hover { border-color: var(--dynamic-theme-color); background: #2a2a2a; }
+.music-playlist-item.active { border-color: var(--dynamic-theme-color); background: var(--dynamic-theme-color); box-shadow: 0 0 10px var(--dynamic-theme-color); }
+.music-track-item { width: 100%; background: #1a1a1a; border: 3px solid #1a1a1a; border-left-color: var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 17px; padding: 14px 16px; cursor: pointer; box-shadow: inset 2px 2px 0 #444; transition: 0.1s; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-sizing: border-box; }
+.music-track-item:hover { background: #242424; box-shadow: 0 0 8px rgba(176, 22, 22, 0.25); }
+.music-track-item.active { background: #2b1515; box-shadow: 0 0 12px var(--dynamic-theme-color); }
+.music-track-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; letter-spacing: 1px; }
+.music-track-index { color: var(--dynamic-theme-color); margin-right: 8px; }
+.music-mini-btn { background: #111; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 12px; padding: 6px 10px; cursor: pointer; letter-spacing: 1px; box-shadow: inset 1px 1px 0 #333; transition: 0.1s; white-space: nowrap; }
+.music-mini-btn:hover { background: var(--dynamic-theme-color); }
+.music-mini-btn-danger { border-color: #8b0000; color: #ffb3b3; }
+.music-mini-btn-danger:hover { background: #8b0000; }
+.music-now-playing { font-size: 16px; color: #ccc; letter-spacing: 1px; border-top: 2px solid #1a1a1a; border-bottom: 2px solid #1a1a1a; padding: 12px 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-empty { font-size: 16px; color: #666; text-align: center; padding: 28px 12px; letter-spacing: 1px; line-height: 1.8; border: 2px dashed #333; background: #111; }
+.music-led { display: inline-block; width: 10px; height: 10px; background: #333; border: 1px solid #555; margin-right: 8px; box-shadow: inset 0 0 4px #000; vertical-align: middle; }
+.music-led.on { background: var(--dynamic-theme-color); box-shadow: 0 0 8px var(--dynamic-theme-color); animation: pulse 1.2s infinite; }
+.music-playlist-purchased { border-color: #44ff88 !important; }
+.music-playlist-purchased.active { background: #15351f !important; box-shadow: 0 0 10px #228844 !important; }
+.music-track-purchased { border-left-color: #44ff88 !important; }
+.music-owned-tag { font-size: 11px; color: #44ff88; letter-spacing: 1px; border: 1px solid #228844; padding: 4px 8px; background: #0a1a0f; white-space: nowrap; }
+.music-visualizer-container { width: 100%; height: 80px; background: #0a0a0a; border: 2px solid var(--dynamic-theme-color); margin-top: 10px; box-shadow: inset 1px 1px 0 #222; }
+.music-visualizer-canvas { width: 100%; height: 100%; display: block; }
+.shop-row { display: flex; flex-direction: row; gap: 14px; justify-content: center; align-items: stretch; width: 100%; margin: 20px 0; box-sizing: border-box; }
+.shop-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; width: 100%; margin: 16px 0 28px; padding: 0; box-sizing: border-box; }
+.shop-item { flex: 1; min-width: 0; border: 3px solid var(--dynamic-theme-color); padding: 18px 14px; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 10px; box-sizing: border-box; min-height: 240px; box-shadow: inset 2px 2px 0 #444; }
+.shop-item-number { font-size: 34px; color: #ffff00; font-weight: bold; text-shadow: 0 0 10px #ffff00; line-height: 1; margin-bottom: 2px; }
+.shop-item-title { font-size: 17px; color: #ff4444; font-weight: bold; text-align: center; letter-spacing: 1px; }
+.shop-item-sub { font-size: 12px; color: #888; text-align: center; line-height: 1.45; margin-bottom: 2px; padding: 0 4px; word-break: break-word; }
+.shop-item .game-btn { width: 100%; font-size: 14px; padding: 12px 8px; line-height: 1.3; white-space: normal; min-height: 46px; }
+.shop-item-lock { font-size: 12px; color: #888; letter-spacing: 2px; border: 2px solid #444; padding: 6px 12px; background: #111; }
+.shop-item-price { font-size: 19px; color: #ffff00; font-weight: bold; text-shadow: 0 0 8px #ffff00; letter-spacing: 1px; margin: 2px 0; }
+.shop-item-owned { font-size: 13px; color: #44ff88; letter-spacing: 2px; border: 2px solid #228844; padding: 6px 12px; background: #0a1a0f; }
+.shop-item.locked { opacity: 0.75; filter: grayscale(0.35); }
+.shop-item.locked .game-btn { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.shop-shell { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; box-sizing: border-box; user-select: auto; cursor: default; text-align: left; }
+.shop-header { flex-shrink: 0; padding: 14px 16px 0; border-bottom: 2px solid #1a1a1a; background: #111; box-shadow: inset 0 -1px 0 #333; }
+.shop-header-title { font-size: 22px; color: #e5e5e5; letter-spacing: 1px; text-align: center; padding-bottom: 10px; }
+.shop-header-points { color: #ffff00; font-weight: bold; text-shadow: 0 0 10px #ffff00; }
+.shop-tabs { display: flex; gap: 0; width: 100%; border-top: 2px solid #1a1a1a; background: #0d0d0d; }
+.shop-tab { flex: 1; background: #141414; border: none; border-right: 2px solid #1a1a1a; border-bottom: 3px solid transparent; color: #777; font-family: inherit; font-size: 13px; letter-spacing: 1px; padding: 14px 8px; cursor: pointer; transition: 0.15s; text-align: center; line-height: 1.35; }
+.shop-tab:last-child { border-right: none; }
+.shop-tab:hover { color: #ccc; background: #1a1a1a; }
+.shop-tab.active { color: #fff; background: #1f1f1f; border-bottom-color: var(--dynamic-theme-color); box-shadow: inset 0 0 12px rgba(176,22,22,0.2); text-shadow: 0 0 8px var(--dynamic-theme-color); }
+.shop-tab-num { display: block; font-size: 11px; color: #ffff00; margin-bottom: 4px; text-shadow: 0 0 6px #ffff00; }
+.shop-tab.active .shop-tab-num { color: #ffff00; }
+.shop-category-banner { width: 100%; margin: 0 0 14px; padding: 10px 14px; border: 2px solid #333; background: #111; color: #aaa; font-size: 13px; letter-spacing: 1px; text-align: center; box-sizing: border-box; box-shadow: inset 1px 1px 0 #222; }
+.shop-category-banner .highlight-system { font-size: 14px; }
+.shop-grid-auto { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; width: 100%; margin: 0 0 28px; padding: 0; box-sizing: border-box; }
+.shop-item.coming-soon { opacity: 0.55; filter: grayscale(0.5); border-color: #555; }
+.shop-item.coming-soon .shop-item-title { color: #888; }
+.shop-item-tag { font-size: 11px; color: #888; letter-spacing: 2px; border: 1px solid #444; padding: 4px 8px; background: #0d0d0d; margin-bottom: 2px; }
+.shop-item-tag.sfx { color: #88ccff; border-color: #336688; background: #0a1520; }
+.shop-item-tag.character { color: #ff88cc; border-color: #883366; background: #1a0a15; }
+.shop-item-tag.music { color: #ff6666; border-color: #883333; background: #1a0a0a; }
+.shop-item-soon { font-size: 12px; color: #666; letter-spacing: 2px; border: 2px dashed #444; padding: 8px 12px; background: #111; text-align: center; width: 100%; box-sizing: border-box; }
+.shop-panel { flex: 1; width: 100%; padding: 16px 18px 64px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.shop-footer { text-align: center; color: #666; font-size: 14px; letter-spacing: 1px; line-height: 1.8; padding-top: 8px; padding-bottom: 24px; }
+.retro-scroll { scrollbar-width: auto; scrollbar-color: var(--dynamic-theme-color) #0a0a0a; }
+.retro-scroll::-webkit-scrollbar { width: 22px; }
+.retro-scroll::-webkit-scrollbar-track { background: #0a0a0a; border-left: 4px solid #1a1a1a; box-shadow: inset 3px 0 0 #222, inset -2px 0 0 #000; }
+.retro-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff5555 0%, var(--dynamic-theme-color) 45%, #6b0f0f 100%); border: 3px solid #f0f0f0; border-radius: 0; min-height: 56px; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.35), inset -2px -2px 0 rgba(0,0,0,0.45); }
+.retro-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #ff7777 0%, #ff4444 50%, #991111 100%); }
+.retro-scroll::-webkit-scrollbar-thumb:active { background: var(--dynamic-theme-color); }
+.retro-scroll::-webkit-scrollbar-corner { background: #0a0a0a; }
+.music-list.retro-scroll { padding-right: 8px; }
+.settings-shell { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 16px; padding: 4px 0; box-sizing: border-box; }
+.settings-section { width: 100%; border: 3px solid var(--dynamic-theme-color); background: #1a1a1a; padding: 16px 20px; box-sizing: border-box; text-align: left; }
+.settings-section-title { font-size: 18px; color: var(--dynamic-theme-color); letter-spacing: 2px; margin-bottom: 12px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+.settings-section .setting-row { width: 100%; }
+#points-toast { position: fixed; top: 18px; right: 22px; z-index: 10002; pointer-events: none; opacity: 0; transform: translateX(120%); transition: opacity 0.25s ease, transform 0.35s ease; background: #111; border: 3px solid #ffff00; color: #ffff00; padding: 10px 18px; font-size: 18px; letter-spacing: 2px; box-shadow: 0 0 16px rgba(255,255,0,0.35), inset 1px 1px 0 #444; text-shadow: 0 0 8px #ffff00; }
+#points-toast.show { opacity: 1; transform: translateX(0); }
+#points-toast .points-toast-sub { display: block; font-size: 11px; color: #888; letter-spacing: 1px; margin-top: 4px; text-shadow: none; }
+.shop-item-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.shop-preview-btn { width: 100%; background: #111; border: 2px solid #888; color: #ccc; font-family: inherit; font-size: 13px; padding: 10px 8px; cursor: pointer; box-shadow: inset 1px 1px 0 #333; transition: 0.1s; letter-spacing: 1px; min-height: 40px; }
+.shop-preview-btn:hover { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px rgba(255,255,0,0.3); }
+.shop-preview-btn.active { border-color: #ffff00; background: #2a2200; color: #ffff00; box-shadow: 0 0 10px rgba(255,255,0,0.4); animation: pulse 1s infinite; }
+.shop-item.previewing { border-color: #ffff00; box-shadow: 0 0 14px rgba(255,255,0,0.35), inset 2px 2px 0 #444; }
+.shop-preview-bar { font-size: 11px; color: #ffff00; letter-spacing: 1px; text-align: center; border: 1px solid #665500; background: #1a1500; padding: 4px 6px; width: 100%; box-sizing: border-box; }
+.settings-boot-badge { display: inline-block; font-size: 12px; letter-spacing: 1px; padding: 4px 10px; border: 2px solid #444; color: #888; margin-left: 8px; }
+.settings-boot-badge.custom { border-color: var(--dynamic-theme-color); color: var(--dynamic-theme-color); box-shadow: 0 0 6px var(--dynamic-theme-color); }
+.settings-boot-field { width: 100%; margin: 10px 0; }
+.settings-boot-label { font-size: 14px; color: #aaa; letter-spacing: 1px; margin-bottom: 6px; }
+.boot-textarea { width: 100%; min-height: 88px; background: #111; border: 2px solid #333; border-left-color: var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 14px; padding: 10px 12px; outline: none; resize: vertical; box-sizing: border-box; line-height: 1.5; user-select: text; cursor: text; }
+.boot-textarea:focus { border-color: var(--dynamic-theme-color); box-shadow: 0 0 8px rgba(176,22,22,0.25); }
+.settings-boot-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.settings-boot-btn { flex: 1; min-width: 140px; background: #222; border: 2px solid var(--dynamic-theme-color); color: white; font-family: inherit; font-size: 14px; padding: 12px; cursor: pointer; letter-spacing: 1px; transition: 0.1s; }
+.settings-boot-btn:hover { background: var(--dynamic-theme-color); }
+.settings-boot-btn.secondary { border-color: #666; color: #ccc; }
+.settings-boot-btn.secondary:hover { background: #333; border-color: #888; box-shadow: none; }
+.settings-boot-hint { font-size: 12px; color: #666; letter-spacing: 1px; line-height: 1.6; margin-top: 10px; }
+.system-stats-bar { position: fixed; top: 0; left: 0; width: 100%; height: 35px; background: #0a0a0a; border-bottom: 2px solid var(--dynamic-theme-color); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-sizing: border-box; z-index: 9999; font-family: "VCR OSD Mono", monospace; font-size: 13px; color: #ccc; letter-spacing: 1px; }
+.system-stats-left { display: flex; gap: 20px; align-items: center; }
+.system-stats-right { display: flex; gap: 15px; align-items: center; }
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-label { color: #666; font-size: 11px; }
+.stat-value { color: var(--dynamic-theme-color); font-weight: bold; text-shadow: 0 0 6px var(--dynamic-theme-color); }
+.clock-widget { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.clock-time { font-size: 16px; color: #ffff00; font-weight: bold; text-shadow: 0 0 8px #ffff00; letter-spacing: 2px; }
+.clock-date { font-size: 11px; color: #888; letter-spacing: 1px; }
+</style>
+</head>
+<body class="flicker-active">
+
+<div id="start-screen" onclick="playClickSound()"><span>[ CLICK TO INITIALIZE V1 BOOT ]</span></div>
+<div id="boot"></div><div id="lore"></div><div id="sys"></div><div id="loading-box"></div>
+<div id="system-opening-text">COMPLETE. SYSTEM IS OPENING</div>
+<div id="points-toast"><span class="points-toast-main">+10 PUAN</span><span class="points-toast-sub" id="points-toast-sub">[ PUAN KAZANILDI ]</span></div>
+
+<div id="system-stats-bar" class="system-stats-bar" style="display: none;">
+    <div class="system-stats-left">
+        <div class="stat-item">
+            <span class="stat-label">CPU:</span>
+            <span class="stat-value" id="cpu-usage">0%</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">RAM:</span>
+            <span class="stat-value" id="ram-usage">0%</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label" id="stat-system-label">SİSTEM:</span>
+            <span class="stat-value">ONLINE</span>
+        </div>
+    </div>
+    <div class="system-stats-right">
+        <div class="clock-widget">
+            <div class="clock-time" id="clock-time">00:00:00</div>
+            <div class="clock-date" id="clock-date">01.01.2026</div>
+        </div>
+    </div>
+</div>
+
+<div id="smile-os-container">
+    <div class="window-header">
+        <div class="window-title">SmileOS 2.0 <span style="margin-left: 20px; font-size: 20px; color: #ffff00; font-weight: bold; text-shadow: 0 0 10px #ffff00;">P: <span id="points-display" style="color: #ffff00; font-weight: bold; text-shadow: 0 0 10px #ffff00;">000</span></span></div>
+        <div class="window-controls"><div class="win-btn" onclick="ipcRenderer.send('window-control', 'minimize')">-</div><div class="win-btn" onclick="ipcRenderer.send('window-control', 'maximize')">+</div><div class="win-btn" onclick="ipcRenderer.send('window-control', 'close')">X</div></div>
+    </div>
+    <div class="window-body">
+        <div class="left-pane">
+            <div class="brand-logo">Smile<span>OS 2.0</span></div>
+            <button class="os-btn" id="nav-btn-apps" onclick="playClickSound(); showApplicationsMenu()">Uygulamalar</button>
+            <button class="os-btn" id="nav-btn-music" onclick="playClickSound(); showStaticModule('music')">Müzikler</button>
+            <button class="os-btn" id="nav-btn-browser" onclick="playClickSound(); showStaticModule('browser')">İnternet Tarayıcısı</button>
+            <button class="os-btn" id="nav-btn-shop" onclick="playClickSound(); showStaticModule('shop')">Puan Mağazası</button>
+            <button class="os-btn" id="nav-btn-settings" onclick="playClickSound(); showStaticModule('settings')">Ayarlar</button>
+        </div>
+        <div class="right-pane">
+            <div class="apps-window">
+                <div class="window-header" style="height: 45px;">
+                    <div class="window-title" style="font-size: 22px;" id="panel-title-target">Günün İpucusu</div>
+                    <div class="window-controls"><div class="win-btn" onclick="ipcRenderer.send('window-control', 'minimize')">-</div><div class="win-btn" onclick="ipcRenderer.send('window-control', 'maximize')">+</div><div class="win-btn" onclick="ipcRenderer.send('window-control', 'close')">X</div></div>
+                </div>
+                <div class="apps-split-body" id="main-split-container">
+                    <div class="apps-mini-left" id="apps-sidebar" style="display: none;">
+                        <div class="mini-title" id="sidebar-modules-title">[ MODÜLLER ]</div>
+                        <button class="sub-btn" id="sidebar-btn-games" onclick="playClickSound(); ipcRenderer.send('launch-app', 'oyunlar')">➔ OYUNLAR</button>
+                        <button class="sub-btn" id="sidebar-btn-extra" onclick="playClickSound(); ipcRenderer.send('launch-app', 'ekstra')">➔ EKSTRA</button>
+                    </div>
+                    <div class="apps-mini-right" id="apps-content-target" style="width: 100%;">
+                        <div id="apps-content-default-text">Sistem başarıyla yüklendi. Sol menüden bir modül seçin.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="bg-music"><source src="musics/muzik.mp3" type="audio/mp3"></audio>
+<audio id="startup-sound"><source src="musics/SmileOS2Startup.ogg" type="audio/ogg"></audio>
+<audio id="shop-music" loop><source src="musics/Shopmusic.ogg" type="audio/ogg"></audio>
+<audio id="shop-music-2" loop><source src="musics/Shopmusic3.ogg" type="audio/ogg"></audio>
+<audio id="shop-music-3" loop><source src="musics/Shopmusic4.ogg" type="audio/ogg"></audio>
+<audio id="click-sound"><source src="musics/SmileOS2Click.ogg" type="audio/ogg"></audio>
+<audio id="ok-sound"><source src="musics/SmileOS2Ok.ogg" type="audio/ogg"></audio>
+<audio id="error-sound"><source src="musics/SmileOS2Error.ogg" type="audio/ogg"></audio>
+<audio id="shop-drawer-sound"><source src="musics/ShopDrawerOpen.ogg" type="audio/ogg"></audio>
+<audio id="minos-sound-1"><source src="musics/minos-prime-thy-end-is-now.mp3" type="audio/mp3"></audio>
+<audio id="minos-sound-2"><source src="musics/minos-prime-prepare-thyself.mp3" type="audio/mp3"></audio>
+<audio id="minos-sound-3"><source src="musics/minos-prime-crush.mp3" type="audio/mp3"></audio>
+<audio id="minos-sound-4"><source src="musics/minos-prime-die.mp3" type="audio/mp3"></audio>
+<audio id="sisyphus-sound-1"><source src="musics/this-will-hurt.mp3" type="audio/mp3"></audio>
+<audio id="sisyphus-sound-2"><source src="musics/sisyphus-prime-this-prison-to-hold-me.mp3" type="audio/mp3"></audio>
+<audio id="shop-preview-player"></audio>
+<audio id="playlist-player"></audio>
+
+<script>
+const { ipcRenderer } = require('electron');
+const { pathToFileURL } = require('url');
+const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
+const APP_ROOT = __dirname;
+const INTRO_PHASES = ["status", "lore", "system", "hold_before_delete", "delete_lore", "delete_status", "hold_after_sys", "delete_sys", "loading_bar", "hold_ready", "opening_text", "cinematic_darkness"];
+const DEFAULT_BOOT_MESSAGES = {
+    status: ["STATUS UPDATE:", "MACHINE ID: V1", "LOCATION: APPROACHING HELL", "CURRENT OBJECTIVE: FIND A WEAPON"],
+    lore: ["MANKIND IS DEAD.", "BLOOD IS FUEL.", "HELL IS FULL."],
+    sys: ["CPU: OK", "GPU: OK", "RAM: OK", "ROM: OK"]
+};
+const glitchTargets = ["V1", "APPROACHING HELL", "FIND A WEAPON", "MANKIND", "BLOOD", "HELL"];
+const PREVIEW_DURATION_MS = 30000;
+
+let statusText = [...DEFAULT_BOOT_MESSAGES.status];
+let loreText = [...DEFAULT_BOOT_MESSAGES.lore];
+let sysText = [...DEFAULT_BOOT_MESSAGES.sys];
+
+let activeGlitch = "", boot = document.getElementById("boot"), lore = document.getElementById("lore"), sys = document.getElementById("sys");
+let startScreen = document.getElementById("start-screen"), bgMusic = document.getElementById("bg-music"), startupSound = document.getElementById("startup-sound");
+let shopMusic = document.getElementById("shop-music"), shopMusic2 = document.getElementById("shop-music-2"), shopMusic3 = document.getElementById("shop-music-3"), clickSound = document.getElementById("click-sound"), okSound = document.getElementById("ok-sound"), errorSound = document.getElementById("error-sound"), shopDrawerSound = document.getElementById("shop-drawer-sound"), minosSound1 = document.getElementById("minos-sound-1"), minosSound2 = document.getElementById("minos-sound-2"), minosSound3 = document.getElementById("minos-sound-3"), minosSound4 = document.getElementById("minos-sound-4"), sisyphusSound1 = document.getElementById("sisyphus-sound-1"), sisyphusSound2 = document.getElementById("sisyphus-sound-2"), shopPreviewPlayer = document.getElementById("shop-preview-player"), playlistPlayer = document.getElementById("playlist-player"), loadingBox = document.getElementById("loading-box");
+let systemOpeningText = document.getElementById("system-opening-text"), smileOs = document.getElementById("smile-os-container");
+let appsSidebar = document.getElementById("apps-sidebar"), appsContentTarget = document.getElementById("apps-content-target"), panelTitleTarget = document.getElementById("panel-title-target");
+
+let currentVolume = parseFloat(localStorage.getItem('smileos_volume') ?? 0.5);
+let isFlickerEnabled = (localStorage.getItem('smileos_flicker') ?? 'true') === 'true';
+let selectedThemeColor = localStorage.getItem('smileos_theme') ?? "#b01616";
+let selectedShopMusic = localStorage.getItem('smileos_shop_music') ?? "Shopmusic.ogg";
+let isMusicAlwaysOn = (localStorage.getItem('smileos_music_always_on') ?? 'false') === 'true';
+let isLoopEnabled = (localStorage.getItem('smileos_loop_enabled') ?? 'false') === 'true';
+let isShuffleEnabled = (localStorage.getItem('smileos_shuffle_enabled') ?? 'false') === 'true';
+let musicMuted = (localStorage.getItem('smileos_music_muted') ?? 'false') === 'true';
+let clickMuted = (localStorage.getItem('smileos_click_muted') ?? 'false') === 'true';
+let skipIntroOnLaunch = (localStorage.getItem('smileos_skip_intro') ?? 'false') === 'true';
+let userPoints = parseInt(localStorage.getItem('smileos_points') ?? '0');
+let pointsTimer = null;
+
+// ============================================================================
+// LANGUAGE / i18n SYSTEM
+// All user-facing UI text lives in TRANSLATIONS below, keyed by language code.
+// t(key) looks up the active language's string (falls back to Turkish, then
+// to the raw key if nothing is found, so a missing translation never crashes
+// the UI). currentLanguage is persisted to localStorage like every other
+// setting. setLanguage() switches it and refreshes anything currently on
+// screen so the change is visible immediately without a restart.
+// ============================================================================
+let currentLanguage = localStorage.getItem('smileos_language') ?? 'tr';
+
+const TRANSLATIONS = {
+    tr: {
+        navApps: 'Uygulamalar', navMusic: 'Müzikler', navBrowser: 'İnternet Tarayıcısı',
+        navShop: 'Puan Mağazası', navSettings: 'Ayarlar',
+        tipOfDay: 'Günün İpucusu',
+        systemLoadedHint: 'Sistem başarıyla yüklendi. Sol menüden bir modül seçin.',
+        sidebarModules: '[ MODÜLLER ]', sidebarGames: '➔ OYUNLAR', sidebarExtra: '➔ EKSTRA',
+        systemReady: 'SİSTEM HAZIR.',
+        appsBreadcrumb: 'Uygulamalar > ', gamesFolderBtn: '➔ OYUNLAR KLASÖRÜ', extraPanelPlaceholder: 'SİBER PANEL EKSTRALARI',
+        browserTitle: 'İnternet Tarayıcısı', urlPlaceholder: 'URL veya arama...', goBtn: 'GİT',
+        searchPlaceholder: "Google'da ara veya URL yaz...", searchBtn: 'ARA', hellNetConnected: '[ HELL NET CONNECTED ]',
+        settingsTitle: 'Ayarlar',
+        displaySettingsTitle: '[ GÖRÜNTÜ AYARLARI ]', crtFlicker: 'CRT EKRAN TİTREMESİ:', skipIntroLabel: 'INTRO ATLA (AÇILIŞTA):',
+        customizationTitle: '[ ÖZELLEŞTİRME ]', hueLabel: 'RENK TONU:', customColorLabel: 'ÖZEL RENK:',
+        languageSectionTitle: '[ DİL / LANGUAGE ]', languageLabel: 'DİL:',
+        bootMessagesTitle: '[ BOOT MESAJLARI ]', customBootBadge: 'ÖZEL BOOT', defaultBootBadge: 'VARSAYILAN BOOT',
+        statusLinesLabel: 'STATUS SATIRLARI (her satır ayrı):', loreLinesLabel: 'LORE SATIRLARI:', sysLinesLabel: 'SİSTEM SATIRLARI:',
+        saveBootBtn: '➔ BOOT KAYDET', resetBootBtn: '↺ VARSAYILANA DÖN',
+        bootHint: 'Her bölümde en az bir satır olmalı. Varsayılana dönünce orijinal ULTRAKILL boot metinleri geri gelir. Değişiklik bir sonraki açılışta geçerli olur. Intro atlama ayrı bir ayardır — boot metinlerinden bağımsızdır.',
+        audioSettingsTitle: '[ SES AYARLARI ]', bgMusicLabel: 'ARKAPLAN MÜZİĞİ:',
+        musicAlwaysOnLabel: 'MÜZİK HEP AÇIK KALSIN:', loopModeLabel: 'ŞARKI DÖNGÜ MODU:', shuffleModeLabel: 'KARIŞTIRMA MODU (SHUFFLE):',
+        muteMusicLabel: 'MÜZİK SESİ KAPAT:', muteClicksLabel: 'TIKLAMA SESİ KAPAT:', volumeLabel: 'SES:',
+        themeRed: 'KIRMIZI', themeBlue: 'MAVİ', themeCalmBlue: 'SAKİN MAVİ', themePurple: 'MOR',
+        themePink: 'GALAKTİK PEMBE', themeYellow: 'SARI', themeBlack: 'SİYAH',
+        shopTitle: 'Puan Mağazası', currentPoints: 'MEVCUT PUANIN:',
+        categoryMusicLabel: 'BOSS MÜZİKLERİ', categorySfxLabel: 'SES EFEKTLERİ', categoryCharacterLabel: 'KARAKTERLER',
+        categoryMusicShort: 'MÜZİK', categorySfxShort: 'SFX', categoryCharacterShort: 'SKIN',
+        categoryMusicBanner: 'KATEGORİ 1 — BOSS MÜZİKLERİ', categoryMusicBannerSub: "9 adet ULTRAKILL boss parçası · Satın alınanlar Müzikler → Satın Alınanlar'a eklenir",
+        categorySfxBanner: 'KATEGORİ 2 — SES EFEKTLERİ', categoryCharacterBanner: 'KATEGORİ 3 — KARAKTERLER',
+        categoryCharacterBannerSub: 'Satın alınan karakterler tarayıcıda görünür',
+        placeholderTag: '[ PLACEHOLDER ]', placeholderComingLater: 'SONRADAN EKLENECEK',
+        bossMusicTag: 'BOSS MÜZİĞİ', characterTag: 'KARAKTER',
+        ownedTag: '[ SATIN ALINDI ]', ownedBtn: 'SATIN ALINDI',
+        previewBtn: '➔ ÖNİZLE (15s)', stopPreviewBtn: '⏹ DURDUR',
+        buyBtn: 'SATIN AL — ', insufficientPointsTag: '[ YETERSİZ PUAN ]', insufficientPointsBtn: 'YETERSİZ PUAN',
+        pointsUnit: 'PUAN', previewCountdownPrefix: '[ ÖNİZLEME: ', previewCountdownSuffix: 's ]',
+        sisyphusDesc: 'Taş yuvarlayan cehennem kralı',
+        musicTitle: 'Müzikler', playlistRecordsTitle: '[ PLAYLIST KAYITLARI ]',
+        soundCoreLabel: 'SES ÇEKİRDEĞİ:', onlineLabel: 'ÇEVRİMİÇİ', archivesLabel: 'ARŞİVLER:',
+        newPlaylistPlaceholder: 'YENİ PLAYLIST ADI...', createRecordBtn: '➔ KAYIT OLUŞTUR',
+        noPlaylistData: '[ PLAYLIST VERİSİ YOK ]<br>CEHENEM ARŞİVİ BOŞ', deleteRecordBtn: '➔ KAYDI SİL',
+        trackArchiveDefault: 'PARÇA ARŞİVİ', exitLabel: 'ÇIKIŞ:', activeLabel: 'AKTİF', standbyLabel: 'BEKLEMEDE',
+        trackLabel: 'PARÇA', uploadFileBtn: '➔ DOSYA YÜKLE', pauseBtn: '➔ DURAKLAT', playBtn: '➔ OYNAT',
+        prevBtn: '◀ ÖNCEKİ', nextBtn: 'SONRAKİ ▶', sortAZBtn: 'A-Z SIRALA', sortZABtn: 'Z-A SIRALA',
+        nowPlayingPrefix: 'ÇALIYOR: ', noSignal: 'SİNYAL YOK — ÇIKIŞ BEKLEMEDE',
+        loadBtn: 'YÜKLE', protectedTag: '[ KORUMALI ]', deleteBtn: 'SİL',
+        noPurchasedTracks: '[ SATIN ALINAN PARÇA YOK ]<br>MAGAZADAN PARÇA AL', emptyTape: '[ BOŞ KASET ]<br>DOSYA YÜKLE TWIN',
+        selectPlaylistHint: '[ PLAYLIST SEÇ ]<br>SOL PANELDEN SEÇ', purchasedPlaylistName: 'Satın Alınanlar',
+        blockNoticeSingle: 'KORUMALI PARCA — MAGAZADAN SATIN ALINMADAN EKLENEMEZ',
+        blockNoticeMulti: ' KORUMALI PARCA ENGELLENDI — MAGAZADAN SATIN ALINMADAN EKLENEMEZ',
+        pointsEarnedMain: ' PUAN', pointsEarnedSub: '[ PUAN KAZANILDI ]',
+        statSystemLabel: 'SİSTEM:'
+    },
+    en: {
+        navApps: 'Applications', navMusic: 'Music', navBrowser: 'Web Browser',
+        navShop: 'Points Shop', navSettings: 'Settings',
+        tipOfDay: 'Tip of the Day',
+        systemLoadedHint: 'System loaded successfully. Select a module from the left menu.',
+        sidebarModules: '[ MODULES ]', sidebarGames: '➔ GAMES', sidebarExtra: '➔ EXTRA',
+        systemReady: 'SYSTEM READY.',
+        appsBreadcrumb: 'Applications > ', gamesFolderBtn: '➔ GAMES FOLDER', extraPanelPlaceholder: 'CYBER PANEL EXTRAS',
+        browserTitle: 'Web Browser', urlPlaceholder: 'URL or search...', goBtn: 'GO',
+        searchPlaceholder: 'Search Google or type a URL...', searchBtn: 'SEARCH', hellNetConnected: '[ HELL NET CONNECTED ]',
+        settingsTitle: 'Settings',
+        displaySettingsTitle: '[ DISPLAY SETTINGS ]', crtFlicker: 'CRT SCREEN FLICKER:', skipIntroLabel: 'SKIP INTRO (ON LAUNCH):',
+        customizationTitle: '[ CUSTOMIZATION ]', hueLabel: 'COLOR THEME:', customColorLabel: 'CUSTOM COLOR:',
+        languageSectionTitle: '[ LANGUAGE / DİL ]', languageLabel: 'LANGUAGE:',
+        bootMessagesTitle: '[ BOOT MESSAGES ]', customBootBadge: 'CUSTOM BOOT', defaultBootBadge: 'DEFAULT BOOT',
+        statusLinesLabel: 'STATUS LINES (one per line):', loreLinesLabel: 'LORE LINES:', sysLinesLabel: 'SYSTEM LINES:',
+        saveBootBtn: '➔ SAVE BOOT', resetBootBtn: '↺ RESET TO DEFAULT',
+        bootHint: 'Each section needs at least one line. Resetting to default restores the original ULTRAKILL boot text. Changes take effect on next launch. Skip intro is a separate setting — independent of the boot text.',
+        audioSettingsTitle: '[ AUDIO SETTINGS ]', bgMusicLabel: 'BACKGROUND MUSIC:',
+        musicAlwaysOnLabel: 'KEEP MUSIC ALWAYS ON:', loopModeLabel: 'TRACK LOOP MODE:', shuffleModeLabel: 'SHUFFLE MODE:',
+        muteMusicLabel: 'MUTE MUSIC:', muteClicksLabel: 'MUTE CLICK SOUNDS:', volumeLabel: 'VOLUME:',
+        themeRed: 'RED', themeBlue: 'BLUE', themeCalmBlue: 'CALM BLUE', themePurple: 'PURPLE',
+        themePink: 'GALACTIC PINK', themeYellow: 'YELLOW', themeBlack: 'BLACK',
+        shopTitle: 'Points Shop', currentPoints: 'CURRENT POINTS:',
+        categoryMusicLabel: 'BOSS TRACKS', categorySfxLabel: 'SOUND EFFECTS', categoryCharacterLabel: 'CHARACTERS',
+        categoryMusicShort: 'MUSIC', categorySfxShort: 'SFX', categoryCharacterShort: 'SKIN',
+        categoryMusicBanner: 'CATEGORY 1 — BOSS TRACKS', categoryMusicBannerSub: "9 ULTRAKILL boss tracks · Purchases are added to Music → Purchased",
+        categorySfxBanner: 'CATEGORY 2 — SOUND EFFECTS', categoryCharacterBanner: 'CATEGORY 3 — CHARACTERS',
+        categoryCharacterBannerSub: 'Purchased characters appear in the browser',
+        placeholderTag: '[ PLACEHOLDER ]', placeholderComingLater: 'COMING SOON',
+        bossMusicTag: 'BOSS TRACK', characterTag: 'CHARACTER',
+        ownedTag: '[ OWNED ]', ownedBtn: 'OWNED',
+        previewBtn: '➔ PREVIEW (15s)', stopPreviewBtn: '⏹ STOP',
+        buyBtn: 'BUY — ', insufficientPointsTag: '[ NOT ENOUGH POINTS ]', insufficientPointsBtn: 'NOT ENOUGH POINTS',
+        pointsUnit: 'POINTS', previewCountdownPrefix: '[ PREVIEW: ', previewCountdownSuffix: 's ]',
+        sisyphusDesc: 'The hell king who rolls the stone',
+        musicTitle: 'Music', playlistRecordsTitle: '[ PLAYLIST RECORDS ]',
+        soundCoreLabel: 'SOUND CORE:', onlineLabel: 'ONLINE', archivesLabel: 'ARCHIVES:',
+        newPlaylistPlaceholder: 'NEW PLAYLIST NAME...', createRecordBtn: '➔ CREATE RECORD',
+        noPlaylistData: '[ NO PLAYLIST DATA ]<br>HELL ARCHIVE EMPTY', deleteRecordBtn: '➔ DELETE RECORD',
+        trackArchiveDefault: 'TRACK ARCHIVE', exitLabel: 'OUTPUT:', activeLabel: 'ACTIVE', standbyLabel: 'STANDBY',
+        trackLabel: 'TRACK', uploadFileBtn: '➔ UPLOAD FILE', pauseBtn: '➔ PAUSE', playBtn: '➔ PLAY',
+        prevBtn: '◀ PREVIOUS', nextBtn: 'NEXT ▶', sortAZBtn: 'SORT A-Z', sortZABtn: 'SORT Z-A',
+        nowPlayingPrefix: 'NOW PLAYING: ', noSignal: 'NO SIGNAL — OUTPUT IDLE',
+        loadBtn: 'LOAD', protectedTag: '[ PROTECTED ]', deleteBtn: 'DELETE',
+        noPurchasedTracks: '[ NO PURCHASED TRACKS ]<br>BUY TRACKS FROM THE SHOP', emptyTape: '[ EMPTY TAPE ]<br>UPLOAD A FILE TWIN',
+        selectPlaylistHint: '[ SELECT A PLAYLIST ]<br>CHOOSE ONE FROM THE LEFT PANEL', purchasedPlaylistName: 'Purchased',
+        blockNoticeSingle: 'PROTECTED TRACK — CANNOT BE ADDED WITHOUT PURCHASING FROM THE SHOP',
+        blockNoticeMulti: ' PROTECTED TRACKS BLOCKED — CANNOT BE ADDED WITHOUT PURCHASING FROM THE SHOP',
+        pointsEarnedMain: ' POINTS', pointsEarnedSub: '[ POINTS EARNED ]',
+        statSystemLabel: 'SYSTEM:'
+    }
+};
+
+function t(key) {
+    return (TRANSLATIONS[currentLanguage] && TRANSLATIONS[currentLanguage][key])
+        ?? (TRANSLATIONS.tr[key] ?? key);
+}
+
+// Updates the bits of the UI that are NOT rebuilt by a render*() function
+// (static HTML written once in <body>), then refreshes whatever module is
+// currently open so its text matches the new language right away.
+function applyStaticTranslations() {
+    const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    setText('nav-btn-apps', t('navApps'));
+    setText('nav-btn-music', t('navMusic'));
+    setText('nav-btn-browser', t('navBrowser'));
+    setText('nav-btn-shop', t('navShop'));
+    setText('nav-btn-settings', t('navSettings'));
+    setText('sidebar-modules-title', t('sidebarModules'));
+    setText('sidebar-btn-games', t('sidebarGames'));
+    setText('sidebar-btn-extra', t('sidebarExtra'));
+    setText('points-toast-sub', t('pointsEarnedSub'));
+    setText('stat-system-label', t('statSystemLabel'));
+    if (!activeModule) {
+        setText('panel-title-target', t('tipOfDay'));
+        setText('apps-content-target', t('systemLoadedHint'));
+    }
+}
+
+function rerenderCurrentModule() {
+    if (activeModule === 'music') { panelTitleTarget.innerHTML = t('musicTitle'); renderMusicModule(); }
+    else if (activeModule === 'shop') { panelTitleTarget.innerHTML = t('shopTitle'); renderShopModule(); }
+    else if (activeModule === 'settings') { panelTitleTarget.innerHTML = t('settingsTitle'); renderSettingsModule(); }
+    else if (activeModule === 'browser') { showStaticModule('browser'); }
+    else if (activeModule === 'apps') { showApplicationsMenu(); }
+}
+
+function setLanguage(lang) {
+    if (lang !== 'tr' && lang !== 'en') return;
+    currentLanguage = lang;
+    localStorage.setItem('smileos_language', lang);
+    applyStaticTranslations();
+    rerenderCurrentModule();
+}
+let statusLines = statusText.map(() => ""), loreLines = loreText.map(() => ""), sysLines = sysText.map(() => "");
+let sLine = 0, sChar = 0, lLine = 0, lChar = 0, sysIndex = 0, sysChar = 0, deleteLineIndex = 0, deleteCharIndex = 0, phase = "waiting", barPercent = 0;
+let musicLibrary = JSON.parse(localStorage.getItem('smileos_music_library') ?? '{"playlists":[],"activePlaylistId":null,"nowPlayingIndex":-1}');
+let musicPlayerState = { isPlaying: false };
+let playlistBlobUrl = null;
+let shopPreviewBlobUrl = null;
+let shopPreviewTimer = null;
+let shopPreviewTickTimer = null;
+let activePreviewItem = null;
+let activeShopCategory = localStorage.getItem('smileos_shop_category') ?? 'music';
+let previewSecondsLeft = 0;
+let activeModule = null;
+let previewResumePlaylist = false;
+const PURCHASED_PLAYLIST_ID = '__smileos_purchased__';
+let audioContext = null;
+let analyser = null;
+let visualizerCanvas = null;
+let visualizerCtx = null;
+let visualizerAnimationId = null;
+
+const THEME_PRESETS = [
+    { value: '#b01616', labelKey: 'themeRed' },
+    { value: '#1c5ec2', labelKey: 'themeBlue' },
+    { value: '#3a9bd5', labelKey: 'themeCalmBlue' },
+    { value: '#7b1fa2', labelKey: 'themePurple' },
+    { value: '#ff2d78', labelKey: 'themePink' },
+    { value: '#fbc02d', labelKey: 'themeYellow' },
+    { value: '#111111', labelKey: 'themeBlack' }
+];
+
+const shopBossTracksConfig = [
+    { id: 'chaos', number: 1, title: 'Heaven Pierce Her - CHAOS', price: 30, row: 1, col: 1, file: 'Heaven_Pierce_Her_-_CHAOS_ULTRAKILL_P-1_Theme_(mp3.pm).mp3' },
+    { id: 'divine', number: 2, title: 'Divine Intervention', price: 50, row: 1, col: 2, file: 'Divine_Intervention.ogg' },
+    { id: 'war-without-reason', number: 3, title: 'Heaven Pierce Her - War Without Reason', price: 100, row: 1, col: 3, file: 'Heaven Pierce Her - War Without Reason (ULTRAKILL 7-4 Theme).mp3' },
+    { id: 'war', number: 4, title: 'Heaven Pierce Her - WAR', price: 100, row: 2, col: 1, file: 'Heaven Pierce Her - WAR (ULTRAKILL P-2 Theme #3).mp3' },
+    { id: 'order', number: 5, title: 'Heaven Pierce Her - ORDER', price: 100, row: 2, col: 2, file: 'Heaven Pierce Her - ORDER (ULTRAKILL P-1 Theme #2).mp3' },
+    { id: 'castle-vein', number: 6, title: 'Castle Vein ~ Combat', price: 100, row: 2, col: 3, file: 'Castle Vein ~ Combat - ULTRAKILL Soundtrack  Heaven Pierce Her.mp3' },
+    { id: 'pandemonium', number: 7, title: 'Heaven Pierce Her - PANDEMONIUM', price: 100, row: 3, col: 1, file: 'Heaven Pierce Her - PANDEMONIUM (ULTRAKILL P-2 Theme #2).mp3' },
+    { id: 'the-fall', number: 8, title: 'Heaven Pierce Her - The Fall', price: 100, row: 3, col: 2, file: 'Heaven Pierce Her - The Fall (ULTRAKILL 8-4 Theme).mp3' },
+    { id: 'versus', number: 9, title: 'Versus', price: 100, row: 3, col: 3, file: 'Versus.mp3' }
+];
+
+const SHOP_CATEGORIES = [
+    { id: 'music', number: 1, labelKey: 'categoryMusicLabel', shortKey: 'categoryMusicShort' },
+    { id: 'sfx', number: 2, labelKey: 'categorySfxLabel', shortKey: 'categorySfxShort' },
+    { id: 'character', number: 3, labelKey: 'categoryCharacterLabel', shortKey: 'categoryCharacterShort' }
+];
+
+const shopCharacterConfig = [
+    { id: 'char-sisyphus', number: 1, title: 'Sisyphus Prime', price: 300, descKey: 'sisyphusDesc' }
+];
+
+let protectedMusicNames = new Set();
+let protectedMusicHashes = new Set();
+
+function hashMusicFileSync(filePath) {
+    try {
+        const data = fs.readFileSync(filePath);
+        return crypto.createHash('sha256').update(data).digest('hex');
+    } catch(e) {
+        return null;
+    }
+}
+
+const BLOCKED_TITLE_FRAGMENTS = [
+    'chaos ultrakill',
+    'divine intervention',
+    'war without reason',
+    'heaven pierce her war',
+    'heaven pierce her order',
+    'castle vein',
+    'pandemonium ultrakill',
+    'the fall ultrakill',
+    'ultrakill p 1 theme',
+    'ultrakill p 2 theme',
+    'ultrakill 7 4 theme',
+    'ultrakill 8 4 theme'
+];
+
+function normalizeMusicName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/\.(mp3|ogg|wav|m4a|flac)$/i, '')
+        .replace(/[_~#()[\].-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function loadProtectedMusicCatalog() {
+    protectedMusicNames = new Set();
+    protectedMusicHashes = new Set();
+    shopBossTracksConfig.forEach(track => {
+        protectedMusicNames.add(track.file.toLowerCase());
+        const hash = hashMusicFileSync(path.join(APP_ROOT, 'musics', track.file));
+        if (hash) protectedMusicHashes.add(hash);
+    });
+}
+
+function isIntroPhase() { return INTRO_PHASES.includes(phase); }
+
+function isProtectedMusicFile(filePath) {
+    if (!filePath) return false;
+    const baseName = path.basename(filePath).toLowerCase();
+    if (protectedMusicNames.has(baseName)) return true;
+
+    const normalized = normalizeMusicName(path.basename(filePath));
+    if (normalized) {
+        for (const track of shopBossTracksConfig) {
+            const bossNorm = normalizeMusicName(track.file);
+            if (bossNorm.length >= 10 && (normalized === bossNorm || normalized.includes(bossNorm) || bossNorm.includes(normalized))) {
+                return true;
+            }
+        }
+        for (const fragment of BLOCKED_TITLE_FRAGMENTS) {
+            if (normalized.includes(fragment)) return true;
+        }
+        if (normalized === 'versus' || normalized.endsWith(' versus') || normalized.startsWith('versus ')) {
+            return true;
+        }
+    }
+
+    const hash = hashMusicFileSync(filePath);
+    return !!(hash && protectedMusicHashes.has(hash));
+}
+
+function isPurchasedPlaylist(playlist) {
+    return !!(playlist && (playlist.id === PURCHASED_PLAYLIST_ID || playlist.isSystem));
+}
+
+function sanitizeMusicLibrary() {
+    let changed = false;
+    musicLibrary.playlists.forEach(playlist => {
+        if (isPurchasedPlaylist(playlist)) return;
+        const before = playlist.tracks.length;
+        playlist.tracks = playlist.tracks.filter(track => !track.isPurchased && !isProtectedMusicFile(track.path));
+        if (playlist.tracks.length !== before) changed = true;
+    });
+    if (changed) {
+        if (musicLibrary.nowPlayingIndex >= 0) {
+            const active = getActivePlaylist();
+            if (!active || musicLibrary.nowPlayingIndex >= active.tracks.length) {
+                musicLibrary.nowPlayingIndex = -1;
+                musicPlayerState.isPlaying = false;
+                clearPlaylistBlobUrl();
+                playlistPlayer.pause();
+                playlistPlayer.removeAttribute("src");
+            }
+        }
+        saveMusicLibrary();
+    }
+}
+
+function clearPlaylistBlobUrl() {
+    if (playlistBlobUrl) {
+        URL.revokeObjectURL(playlistBlobUrl);
+        playlistBlobUrl = null;
+    }
+}
+
+function syncPurchasedPlaylist() {
+    musicLibrary.playlists = musicLibrary.playlists.filter(p => p.id !== PURCHASED_PLAYLIST_ID);
+    if (!ownedBossTracks.length) {
+        if (musicLibrary.activePlaylistId === PURCHASED_PLAYLIST_ID) {
+            musicLibrary.activePlaylistId = musicLibrary.playlists[0]?.id || null;
+        }
+        saveMusicLibrary();
+        return;
+    }
+    const tracks = ownedBossTracks.map(bossId => {
+        const cfg = shopBossTracksConfig.find(t => t.id === bossId);
+        if (!cfg) return null;
+        return { id: 'boss-' + bossId, name: cfg.title, bossId, isPurchased: true };
+    }).filter(Boolean);
+    musicLibrary.playlists.unshift({
+        id: PURCHASED_PLAYLIST_ID,
+        name: t('purchasedPlaylistName'),
+        tracks,
+        isSystem: true
+    });
+    saveMusicLibrary();
+}
+
+loadProtectedMusicCatalog();
+sanitizeMusicLibrary();
+
+let ownedBossTracks = JSON.parse(localStorage.getItem('smileos_owned_boss') ?? '[]');
+let ownedCharacters = JSON.parse(localStorage.getItem('smileos_owned_characters') ?? '[]');
+syncPurchasedPlaylist();
+
+function saveMusicLibrary() { localStorage.setItem('smileos_music_library', JSON.stringify(musicLibrary)); }
+function getActivePlaylist() { return musicLibrary.playlists.find(p => p.id === musicLibrary.activePlaylistId) || null; }
+function makeMusicId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function getTrackName(path) { return path.split(/[\\/]/).pop(); }
+function escapeHtml(text) { return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function padTrackNumber(num) { return String(num).padStart(2, '0'); }
+
+function isBossTrackOwned(id) { return ownedBossTracks.includes(id); }
+function saveOwnedBossTracks() { localStorage.setItem('smileos_owned_boss', JSON.stringify(ownedBossTracks)); }
+
+function isCharacterOwned(id) { return ownedCharacters.includes(id); }
+function saveOwnedCharacters() { localStorage.setItem('smileos_owned_characters', JSON.stringify(ownedCharacters)); }
+
+function isShopItemPreviewing(category, id) {
+    return !!(activePreviewItem && activePreviewItem.category === category && activePreviewItem.id === id);
+}
+
+function selectShopCategory(categoryId) {
+    if (activeShopCategory === categoryId) return;
+    stopShopPreview(false);
+    activeShopCategory = categoryId;
+    localStorage.setItem('smileos_shop_category', categoryId);
+    renderShopModule();
+}
+
+function isCustomBootActive() {
+    return localStorage.getItem('smileos_custom_boot') !== null;
+}
+
+function getSavedBootMessages() {
+    try {
+        const raw = localStorage.getItem('smileos_custom_boot');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) {
+        return null;
+    }
+}
+
+function getBootMessagesForSettings() {
+    const saved = getSavedBootMessages();
+    if (saved) {
+        return {
+            status: saved.status?.length ? saved.status : DEFAULT_BOOT_MESSAGES.status,
+            lore: saved.lore?.length ? saved.lore : DEFAULT_BOOT_MESSAGES.lore,
+            sys: saved.sys?.length ? saved.sys : DEFAULT_BOOT_MESSAGES.sys
+        };
+    }
+    return {
+        status: [...DEFAULT_BOOT_MESSAGES.status],
+        lore: [...DEFAULT_BOOT_MESSAGES.lore],
+        sys: [...DEFAULT_BOOT_MESSAGES.sys]
+    };
+}
+
+function applyBootMessagesFromStorage() {
+    const saved = getSavedBootMessages();
+    if (saved) {
+        statusText = saved.status?.length ? [...saved.status] : [...DEFAULT_BOOT_MESSAGES.status];
+        loreText = saved.lore?.length ? [...saved.lore] : [...DEFAULT_BOOT_MESSAGES.lore];
+        sysText = saved.sys?.length ? [...saved.sys] : [...DEFAULT_BOOT_MESSAGES.sys];
+    } else {
+        statusText = [...DEFAULT_BOOT_MESSAGES.status];
+        loreText = [...DEFAULT_BOOT_MESSAGES.lore];
+        sysText = [...DEFAULT_BOOT_MESSAGES.sys];
+    }
+}
+
+function resetBootSequenceState() {
+    statusLines = statusText.map(() => "");
+    loreLines = loreText.map(() => "");
+    sysLines = sysText.map(() => "");
+    sLine = 0;
+    sChar = 0;
+    lLine = 0;
+    lChar = 0;
+    sysIndex = 0;
+    sysChar = 0;
+    deleteLineIndex = 0;
+    deleteCharIndex = 0;
+    barPercent = 0;
+    activeGlitch = "";
+}
+
+function saveCustomBootMessages() {
+    const statusRaw = document.getElementById('boot-status-input')?.value ?? '';
+    const loreRaw = document.getElementById('boot-lore-input')?.value ?? '';
+    const sysRaw = document.getElementById('boot-sys-input')?.value ?? '';
+    const status = statusRaw.split('\n').map(line => line.trim()).filter(Boolean);
+    const lore = loreRaw.split('\n').map(line => line.trim()).filter(Boolean);
+    const sys = sysRaw.split('\n').map(line => line.trim()).filter(Boolean);
+    if (!status.length || !lore.length || !sys.length) {
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+        return;
+    }
+    localStorage.setItem('smileos_custom_boot', JSON.stringify({ status, lore, sys }));
+    applyBootMessagesFromStorage();
+    try { okSound.currentTime = 0; okSound.play(); } catch(e) {}
+    renderSettingsModule();
+}
+
+function resetBootMessagesToDefault() {
+    localStorage.removeItem('smileos_custom_boot');
+    applyBootMessagesFromStorage();
+    try { okSound.currentTime = 0; okSound.play(); } catch(e) {}
+    renderSettingsModule();
+}
+
+function playDrawerSound() {
+    if (!shopDrawerSound) return;
+    try {
+        shopDrawerSound.currentTime = 0;
+        shopDrawerSound.volume = currentVolume;
+        shopDrawerSound.play();
+    } catch(e) {}
+}
+
+function showPointsNotification(amount) {
+    const toast = document.getElementById('points-toast');
+    if (!toast) return;
+    const main = toast.querySelector('.points-toast-main');
+    if (main) main.textContent = `+${amount}${t('pointsEarnedMain')}`;
+    toast.classList.add('show');
+    playDrawerSound();
+    clearTimeout(showPointsNotification._timer);
+    showPointsNotification._timer = setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+function clearShopPreviewBlobUrl() {
+    if (shopPreviewBlobUrl) {
+        URL.revokeObjectURL(shopPreviewBlobUrl);
+        shopPreviewBlobUrl = null;
+    }
+}
+
+function stopShopPreview(resumeShop = true) {
+    if (shopPreviewTimer) {
+        clearTimeout(shopPreviewTimer);
+        shopPreviewTimer = null;
+    }
+    if (shopPreviewTickTimer) {
+        clearInterval(shopPreviewTickTimer);
+        shopPreviewTickTimer = null;
+    }
+    if (shopPreviewPlayer) {
+        shopPreviewPlayer.pause();
+        shopPreviewPlayer.removeAttribute('src');
+    }
+    clearShopPreviewBlobUrl();
+    const resumePlaylist = previewResumePlaylist;
+    previewResumePlaylist = false;
+    activePreviewItem = null;
+    previewSecondsLeft = 0;
+    if (resumeShop && phase === 'desktop' && activeModule === 'shop') {
+        if (resumePlaylist && playlistPlayer.src) {
+            playlistPlayer.play().then(() => {
+                musicPlayerState.isPlaying = true;
+                startPointsTimer();
+            }).catch(() => { musicPlayerState.isPlaying = false; });
+        } else if (!musicPlayerState.isPlaying) {
+            resumeShopMusic();
+        }
+    }
+    if (activeModule === 'shop') renderShopModule();
+}
+
+async function playShopPreview(category, itemId, ipcChannel, durationMs) {
+    if (isShopItemPreviewing(category, itemId)) {
+        stopShopPreview(true);
+        return;
+    }
+    stopShopPreview(false);
+    stopShopMusic();
+    previewResumePlaylist = !!(musicPlayerState.isPlaying && playlistPlayer.src);
+    if (previewResumePlaylist) {
+        playlistPlayer.pause();
+        musicPlayerState.isPlaying = false;
+        stopPointsTimer();
+    }
+    const audioData = await ipcRenderer.invoke(ipcChannel, itemId);
+    if (!audioData) {
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+        if (activeModule === 'shop') resumeShopMusic();
+        return;
+    }
+    const binary = atob(audioData.base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    shopPreviewBlobUrl = URL.createObjectURL(new Blob([bytes], { type: audioData.mime }));
+    shopPreviewPlayer.volume = musicMuted ? 0 : currentVolume;
+    shopPreviewPlayer.src = shopPreviewBlobUrl;
+    activePreviewItem = { category, id: itemId };
+    previewSecondsLeft = Math.floor(durationMs / 1000);
+    try {
+        await shopPreviewPlayer.play();
+    } catch(e) {
+        stopShopPreview(true);
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(err) {}
+        return;
+    }
+    renderShopModule();
+    shopPreviewTickTimer = setInterval(() => {
+        previewSecondsLeft = Math.max(0, previewSecondsLeft - 1);
+        const bar = document.getElementById('shop-preview-countdown');
+        if (bar) bar.textContent = `${t('previewCountdownPrefix')}${previewSecondsLeft}${t('previewCountdownSuffix')}`;
+        if (previewSecondsLeft <= 0 && shopPreviewTickTimer) {
+            clearInterval(shopPreviewTickTimer);
+            shopPreviewTickTimer = null;
+        }
+    }, 1000);
+    shopPreviewTimer = setTimeout(() => stopShopPreview(true), durationMs);
+}
+
+function previewBossTrack(trackId) {
+    playShopPreview('music', trackId, 'get-boss-track-preview-audio', PREVIEW_DURATION_MS);
+}
+
+function purchaseBossTrack(id) {
+    const track = shopBossTracksConfig.find(t => t.id === id);
+    if (!track || isBossTrackOwned(id)) return;
+    if (userPoints < track.price) {
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+        return;
+    }
+    stopShopPreview(false);
+    userPoints -= track.price;
+    ownedBossTracks.push(id);
+    saveOwnedBossTracks();
+    syncPurchasedPlaylist();
+    updatePointsDisplay();
+    playDrawerSound();
+    renderShopModule();
+}
+
+function purchaseCharacter(id) {
+    const character = shopCharacterConfig.find(c => c.id === id);
+    if (!character || isCharacterOwned(id)) return;
+    if (userPoints < character.price) {
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+        return;
+    }
+    userPoints -= character.price;
+    ownedCharacters.push(id);
+    saveOwnedCharacters();
+    updatePointsDisplay();
+    playDrawerSound();
+    renderShopModule();
+}
+
+function renderShopTabs() {
+    return SHOP_CATEGORIES.map(cat => `
+        <button class="shop-tab ${activeShopCategory === cat.id ? 'active' : ''}" onclick="playClickSound(); selectShopCategory('${cat.id}')">
+            <span class="shop-tab-num">${cat.number}</span>${t(cat.labelKey)}
+        </button>`).join('');
+}
+
+function renderShopItem(track) {
+    const owned = isBossTrackOwned(track.id);
+    const canBuy = !owned && userPoints >= track.price;
+    const isPreviewing = isShopItemPreviewing('music', track.id);
+    let actionHtml = '';
+    const previewBtn = `<button class="shop-preview-btn ${isPreviewing ? 'active' : ''}" onclick="playClickSound(); previewBossTrack('${track.id}')">${isPreviewing ? t('stopPreviewBtn') : t('previewBtn')}</button>`;
+    if (owned) {
+        actionHtml = `<div class="shop-item-owned">${t('ownedTag')}</div>${previewBtn}<button class="game-btn" disabled style="opacity:0.5;cursor:default;">${t('ownedBtn')}</button>`;
+    } else if (canBuy) {
+        actionHtml = `${previewBtn}<button class="game-btn" onclick="playClickSound(); purchaseBossTrack('${track.id}')">${t('buyBtn')}${track.price} P</button>`;
+    } else {
+        actionHtml = `${previewBtn}<div class="shop-item-lock">${t('insufficientPointsTag')}</div><button class="game-btn" disabled style="opacity:0.5;cursor:not-allowed;">${t('insufficientPointsBtn')}</button>`;
+    }
+    const previewBar = isPreviewing ? `<div class="shop-preview-bar" id="shop-preview-countdown">${t('previewCountdownPrefix')}${previewSecondsLeft}${t('previewCountdownSuffix')}</div>` : '';
+    return `
+        <div class="shop-item ${!owned && !canBuy ? 'locked' : ''} ${isPreviewing ? 'previewing' : ''}" style="grid-row:${track.row};grid-column:${track.col};">
+            <div class="shop-item-number">${track.number}</div>
+            <div class="shop-item-tag music">${t('bossMusicTag')}</div>
+            <div class="shop-item-sub">${escapeHtml(track.title)}</div>
+            <div class="shop-item-price">${track.price} ${t('pointsUnit')}</div>
+            ${previewBar}
+            <div class="shop-item-actions">${actionHtml}</div>
+        </div>`;
+}
+
+
+function renderCharacterShopItem(character) {
+    const owned = isCharacterOwned(character.id);
+    const canBuy = !owned && userPoints >= character.price;
+    let actionHtml = '';
+    if (owned) {
+        actionHtml = `<div class="shop-item-owned">${t('ownedTag')}</div><button class="game-btn" disabled style="opacity:0.5;cursor:default;">${t('ownedBtn')}</button>`;
+    } else if (canBuy) {
+        actionHtml = `<button class="game-btn" onclick="playClickSound(); purchaseCharacter('${character.id}')">${t('buyBtn')}${character.price} P</button>`;
+    } else {
+        actionHtml = `<div class="shop-item-lock">${t('insufficientPointsTag')}</div><button class="game-btn" disabled style="opacity:0.5;cursor:not-allowed;">${t('insufficientPointsBtn')}</button>`;
+    }
+    return `
+        <div class="shop-item ${!owned && !canBuy ? 'locked' : ''}">
+            <div class="shop-item-number">${character.number}</div>
+            <div class="shop-item-tag character">${t('characterTag')}</div>
+            <div class="shop-item-sub">${escapeHtml(character.title)}</div>
+            <div class="shop-item-sub" style="color:#666;font-size:11px;">${escapeHtml(t(character.descKey))}</div>
+            <div class="shop-item-price">${character.price} ${t('pointsUnit')}</div>
+            <div class="shop-item-actions">${actionHtml}</div>
+        </div>`;
+}
+
+function renderShopCategoryContent() {
+    if (activeShopCategory === 'music') {
+        return `
+            <div class="shop-category-banner"><span class="highlight-system">${t('categoryMusicBanner')}</span><br>${t('categoryMusicBannerSub')}</div>
+            <div class="shop-grid">${shopBossTracksConfig.map(renderShopItem).join('')}</div>`;
+    }
+    if (activeShopCategory === 'sfx') {
+        return `
+            <div class="shop-category-banner"><span class="highlight-system">${t('categorySfxBanner')}</span><br>${t('placeholderTag')}</div>
+            <div class="shop-footer">${t('placeholderTag')}<br>${t('placeholderComingLater')}</div>`;
+    }
+    return `
+        <div class="shop-category-banner"><span class="highlight-system">${t('categoryCharacterBanner')}</span><br>${t('categoryCharacterBannerSub')}</div>
+        <div class="shop-grid-auto">${shopCharacterConfig.map(renderCharacterShopItem).join('')}</div>`;
+}
+
+function renderShopModule() {
+    appsContentTarget.innerHTML = `
+        <div class="shop-shell">
+            <div class="shop-header">
+                <div class="shop-header-title"><span class="highlight-system">${t('currentPoints')}</span> <span id="shop-points-display" class="shop-header-points">${String(userPoints).padStart(3, '0')}</span></div>
+                <div class="shop-tabs">${renderShopTabs()}</div>
+            </div>
+            <div class="shop-panel retro-scroll">
+                ${renderShopCategoryContent()}
+            </div>
+        </div>`;
+}
+
+function renderSettingsModule() {
+    const presetValues = THEME_PRESETS.map(p => p.value);
+    const themeOptions = THEME_PRESETS.map(p =>
+        `<option value="${p.value}" ${selectedThemeColor === p.value ? 'selected' : ''}>${t(p.labelKey)}</option>`
+    ).join('');
+    const customColorValue = presetValues.includes(selectedThemeColor) ? '#b01616' : selectedThemeColor;
+    const bootMessages = getBootMessagesForSettings();
+    const bootBadgeClass = isCustomBootActive() ? 'settings-boot-badge custom' : 'settings-boot-badge';
+    const bootBadgeText = isCustomBootActive() ? t('customBootBadge') : t('defaultBootBadge');
+
+    appsContentTarget.innerHTML = `<div class="settings-scroll-panel retro-scroll"><div class="settings-page-wrap"><div class="settings-shell">
+        <div class="settings-section">
+            <div class="settings-section-title">${t('displaySettingsTitle')}</div>
+            <div class="setting-row"><div class="setting-label">${t('crtFlicker')}</div><input type="checkbox" class="retro-checkbox" ${isFlickerEnabled ? 'checked' : ''} onchange="playClickSound(); toggleFlicker(this)"></div>
+            <div class="setting-row"><div class="setting-label">${t('skipIntroLabel')}</div><input type="checkbox" class="retro-checkbox" ${skipIntroOnLaunch ? 'checked' : ''} onchange="playClickSound(); toggleSkipIntro(this)"></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">${t('languageSectionTitle')}</div>
+            <div class="setting-row"><div class="setting-label">${t('languageLabel')}</div><select class="retro-select" onchange="playClickSound(); setLanguage(this.value)">
+                <option value="tr" ${currentLanguage === 'tr' ? 'selected' : ''}>TÜRKÇE</option>
+                <option value="en" ${currentLanguage === 'en' ? 'selected' : ''}>ENGLISH</option>
+            </select></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">${t('customizationTitle')}</div>
+            <div class="setting-row"><div class="setting-label">${t('hueLabel')}</div><select class="retro-select" onchange="playClickSound(); changeSystemTheme(this.value)">${themeOptions}</select></div>
+            <div class="setting-row"><div class="setting-label">${t('customColorLabel')}</div><input type="color" class="retro-select" style="width: 60px; height: 36px; padding: 0; cursor: pointer;" value="${customColorValue}" onchange="playClickSound(); changeSystemTheme(this.value)"></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">${t('bootMessagesTitle')} <span class="${bootBadgeClass}">${bootBadgeText}</span></div>
+            <div class="settings-boot-field">
+                <div class="settings-boot-label">${t('statusLinesLabel')}</div>
+                <textarea id="boot-status-input" class="boot-textarea" onclick="event.stopPropagation()">${escapeHtml(bootMessages.status.join('\n'))}</textarea>
+            </div>
+            <div class="settings-boot-field">
+                <div class="settings-boot-label">${t('loreLinesLabel')}</div>
+                <textarea id="boot-lore-input" class="boot-textarea" onclick="event.stopPropagation()">${escapeHtml(bootMessages.lore.join('\n'))}</textarea>
+            </div>
+            <div class="settings-boot-field">
+                <div class="settings-boot-label">${t('sysLinesLabel')}</div>
+                <textarea id="boot-sys-input" class="boot-textarea" onclick="event.stopPropagation()">${escapeHtml(bootMessages.sys.join('\n'))}</textarea>
+            </div>
+            <div class="settings-boot-actions">
+                <button class="settings-boot-btn" onclick="playClickSound(); saveCustomBootMessages()">${t('saveBootBtn')}</button>
+                <button class="settings-boot-btn secondary" onclick="playClickSound(); resetBootMessagesToDefault()">${t('resetBootBtn')}</button>
+            </div>
+            <div class="settings-boot-hint">${t('bootHint')}</div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">${t('audioSettingsTitle')}</div>
+            <div class="setting-row"><div class="setting-label">${t('bgMusicLabel')}</div><select class="retro-select" onchange="playClickSound(); changeShopMusic(this.value)"><option value="Shopmusic.ogg" ${selectedShopMusic === 'Shopmusic.ogg' ? 'selected' : ''}>HARKONNEN</option><option value="Shopmusic3.ogg" ${selectedShopMusic === 'Shopmusic3.ogg' ? 'selected' : ''}>VULPUS</option><option value="Shopmusic4.ogg" ${selectedShopMusic === 'Shopmusic4.ogg' ? 'selected' : ''}>CERBERUS</option></select></div>
+            <div class="setting-row"><div class="setting-label">${t('musicAlwaysOnLabel')}</div><input type="checkbox" class="retro-checkbox" ${isMusicAlwaysOn ? 'checked' : ''} onchange="playClickSound(); toggleMusicAlwaysOn(this)"></div>
+            <div class="setting-row"><div class="setting-label">${t('loopModeLabel')}</div><input type="checkbox" class="retro-checkbox" ${isLoopEnabled ? 'checked' : ''} onchange="playClickSound(); toggleLoopMode(this)"></div>
+            <div class="setting-row"><div class="setting-label">${t('shuffleModeLabel')}</div><input type="checkbox" class="retro-checkbox" ${isShuffleEnabled ? 'checked' : ''} onchange="playClickSound(); toggleShuffleMode(this)"></div>
+            <div class="setting-row"><div class="setting-label">${t('muteMusicLabel')}</div><input type="checkbox" class="retro-checkbox" ${musicMuted ? 'checked' : ''} onchange="playClickSound(); toggleMusicMute(this)"></div>
+            <div class="setting-row"><div class="setting-label">${t('muteClicksLabel')}</div><input type="checkbox" class="retro-checkbox" ${clickMuted ? 'checked' : ''} onchange="playClickSound(); toggleClickMute(this)"></div>
+            <div class="setting-row"><div class="volume-container"><div class="setting-label" style="text-align:center;">${t('volumeLabel')} <span id="vol-indicator" class="highlight-system">${Math.floor(currentVolume * 100)}%</span></div><input type="range" min="0" max="1" step="0.05" value="${currentVolume}" class="retro-slider" oninput="updateSystemVolume(this.value)"></div></div>
+        </div>
+    </div></div></div>`;
+}
+
+function applyPersistedSettings() {
+    document.documentElement.style.setProperty('--dynamic-theme-color', selectedThemeColor);
+    if (isFlickerEnabled) document.body.classList.add("flicker-active");
+    else document.body.classList.remove("flicker-active");
+    if (playlistPlayer) playlistPlayer.loop = isLoopEnabled;
+    updateSystemVolume(currentVolume);
+    updatePointsDisplay();
+}
+
+function playStartupAndShopMusic() {
+    if (musicMuted) return;
+    try {
+        startupSound.currentTime = 0;
+        startupSound.volume = currentVolume;
+        startupSound.play();
+        startupSound.onended = () => resumeShopMusic();
+    } catch(e) {}
+}
+
+function updatePointsDisplay() {
+    const display = document.getElementById("points-display");
+    const shopDisplay = document.getElementById("shop-points-display");
+    const formatted = String(userPoints).padStart(3, '0');
+    if (display) display.innerText = formatted;
+    if (shopDisplay) shopDisplay.innerText = formatted;
+    localStorage.setItem('smileos_points', userPoints);
+}
+
+function startPointsTimer() {
+    if (pointsTimer) clearInterval(pointsTimer);
+    pointsTimer = setInterval(() => {
+        userPoints += 10;
+        updatePointsDisplay();
+        showPointsNotification(10);
+    }, 60000);
+}
+
+function stopPointsTimer() {
+    if (pointsTimer) {
+        clearInterval(pointsTimer);
+        pointsTimer = null;
+    }
+}
+
+function syncPlaylistPlayerVolume() {
+    if (playlistPlayer) playlistPlayer.volume = musicMuted ? 0 : currentVolume;
+}
+
+function resumeShopMusic() {
+    if (musicMuted) return;
+    shopMusic.pause();
+    shopMusic2.pause();
+    shopMusic3.pause();
+    if (selectedShopMusic === "Shopmusic.ogg") shopMusic.play();
+    else if (selectedShopMusic === "Shopmusic3.ogg") shopMusic2.play();
+    else if (selectedShopMusic === "Shopmusic4.ogg") shopMusic3.play();
+}
+
+function stopShopMusic() {
+    shopMusic.pause();
+    shopMusic2.pause();
+    shopMusic3.pause();
+}
+
+function playPlaylistTrack(index) {
+    const playlist = getActivePlaylist();
+    if (!playlist || !playlist.tracks[index]) return;
+    const track = playlist.tracks[index];
+    stopPointsTimer();
+    musicLibrary.nowPlayingIndex = index;
+    saveMusicLibrary();
+    stopShopMusic();
+    clearPlaylistBlobUrl();
+    playlistPlayer.volume = musicMuted ? 0 : currentVolume;
+    playlistPlayer.loop = isLoopEnabled;
+
+    if (track.isPurchased && track.bossId) {
+        if (!isBossTrackOwned(track.bossId)) {
+            musicPlayerState.isPlaying = false;
+            try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+            return;
+        }
+        ipcRenderer.invoke('get-owned-boss-track-audio', track.bossId, ownedBossTracks).then(audioData => {
+            if (!audioData) {
+                musicPlayerState.isPlaying = false;
+                try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+                return;
+            }
+            const binary = atob(audioData.base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: audioData.mime });
+            playlistBlobUrl = URL.createObjectURL(blob);
+            playlistPlayer.src = playlistBlobUrl;
+            playlistPlayer.play().then(() => { musicPlayerState.isPlaying = true; startPointsTimer(); renderMusicModule(); }).catch(() => { musicPlayerState.isPlaying = false; renderMusicModule(); });
+        });
+        return;
+    }
+
+    if (isProtectedMusicFile(track.path)) {
+        musicPlayerState.isPlaying = false;
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+        return;
+    }
+    playlistPlayer.src = pathToFileURL(track.path).href;
+    playlistPlayer.play().then(() => { musicPlayerState.isPlaying = true; startPointsTimer(); startVisualizer(); renderMusicModule(); }).catch(() => { musicPlayerState.isPlaying = false; renderMusicModule(); });
+}
+
+function togglePlaylistPlayback() {
+    if (!playlistPlayer.src) {
+        const playlist = getActivePlaylist();
+        if (playlist && playlist.tracks.length) playPlaylistTrack(0);
+        return;
+    }
+    if (playlistPlayer.paused) {
+        stopShopMusic();
+        playlistPlayer.play().then(() => { musicPlayerState.isPlaying = true; startPointsTimer(); startVisualizer(); renderMusicModule(); });
+    } else {
+        playlistPlayer.pause();
+        musicPlayerState.isPlaying = false;
+        stopPointsTimer();
+        stopVisualizer();
+        if (!isMusicAlwaysOn) resumeShopMusic();
+        renderMusicModule();
+    }
+}
+
+function playNextTrack() {
+    const playlist = getActivePlaylist();
+    if (!playlist || !playlist.tracks.length) return;
+    let next;
+    if (isShuffleEnabled && playlist.tracks.length > 1) {
+        do {
+            next = Math.floor(Math.random() * playlist.tracks.length);
+        } while (next === musicLibrary.nowPlayingIndex);
+    } else {
+        next = musicLibrary.nowPlayingIndex < playlist.tracks.length - 1 ? musicLibrary.nowPlayingIndex + 1 : 0;
+    }
+    playPlaylistTrack(next);
+}
+
+function playPrevTrack() {
+    const playlist = getActivePlaylist();
+    if (!playlist || !playlist.tracks.length) return;
+    const prev = musicLibrary.nowPlayingIndex > 0 ? musicLibrary.nowPlayingIndex - 1 : playlist.tracks.length - 1;
+    playPlaylistTrack(prev);
+}
+
+function createPlaylist() {
+    const input = document.getElementById("new-playlist-name");
+    const name = (input?.value || "").trim();
+    if (!name) return;
+    const playlist = { id: makeMusicId(), name, tracks: [] };
+    musicLibrary.playlists.unshift(playlist);
+    musicLibrary.activePlaylistId = playlist.id;
+    musicLibrary.nowPlayingIndex = -1;
+    saveMusicLibrary();
+    if (input) input.value = "";
+    try { okSound.currentTime = 0; okSound.play(); } catch(e) {}
+    renderMusicModule();
+}
+
+function selectPlaylist(id) {
+    musicLibrary.activePlaylistId = id;
+    musicLibrary.nowPlayingIndex = -1;
+    musicPlayerState.isPlaying = false;
+    stopPointsTimer();
+    clearPlaylistBlobUrl();
+    playlistPlayer.pause();
+    playlistPlayer.removeAttribute("src");
+    saveMusicLibrary();
+    if (!isMusicAlwaysOn) resumeShopMusic();
+    renderMusicModule();
+}
+
+function deleteActivePlaylist() {
+    const playlist = getActivePlaylist();
+    if (!playlist || isPurchasedPlaylist(playlist)) return;
+    musicLibrary.playlists = musicLibrary.playlists.filter(p => p.id !== playlist.id);
+    musicLibrary.activePlaylistId = musicLibrary.playlists[0]?.id || null;
+    musicLibrary.nowPlayingIndex = -1;
+    musicPlayerState.isPlaying = false;
+    clearPlaylistBlobUrl();
+    playlistPlayer.pause();
+    playlistPlayer.removeAttribute("src");
+    stopPointsTimer();
+    saveMusicLibrary();
+    try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+    if (!isMusicAlwaysOn) resumeShopMusic();
+    renderMusicModule();
+}
+
+async function addSongsToActivePlaylist() {
+    const playlist = getActivePlaylist();
+    if (!playlist || isPurchasedPlaylist(playlist)) return;
+    const pickResult = await ipcRenderer.invoke('pick-music-files');
+    const files = pickResult.files || [];
+    let blocked = pickResult.blocked || 0;
+    if (!files.length && !blocked) return;
+    let added = 0;
+    for (const filePath of files) {
+        const blockedByMain = await ipcRenderer.invoke('is-music-file-blocked', filePath);
+        if (blockedByMain || isProtectedMusicFile(filePath)) {
+            blocked++;
+            continue;
+        }
+        if (!playlist.tracks.some(track => track.path === filePath)) {
+            playlist.tracks.push({ id: makeMusicId(), name: getTrackName(filePath), path: filePath });
+            added++;
+        }
+    }
+    saveMusicLibrary();
+    if (blocked) {
+        try { errorSound.currentTime = 0; errorSound.play(); } catch(e) {}
+    } else if (added) {
+        try { okSound.currentTime = 0; okSound.play(); } catch(e) {}
+    }
+    renderMusicModule();
+    if (blocked) showMusicBlockNotice(blocked);
+}
+
+function showMusicBlockNotice(count) {
+    const el = document.getElementById('music-block-notice');
+    if (!el) return;
+    el.textContent = count === 1
+        ? t('blockNoticeSingle')
+        : `${count}${t('blockNoticeMulti')}`;
+    el.style.display = 'block';
+    clearTimeout(showMusicBlockNotice._timer);
+    showMusicBlockNotice._timer = setTimeout(() => { el.style.display = 'none'; }, 4500);
+}
+
+function removeTrack(trackId) {
+    const playlist = getActivePlaylist();
+    if (!playlist || isPurchasedPlaylist(playlist)) return;
+    const target = playlist.tracks.find(track => track.id === trackId);
+    if (!target || target.isPurchased) return;
+    const removedIndex = playlist.tracks.findIndex(track => track.id === trackId);
+    playlist.tracks = playlist.tracks.filter(track => track.id !== trackId);
+    if (musicLibrary.nowPlayingIndex === removedIndex) {
+        musicLibrary.nowPlayingIndex = -1;
+        musicPlayerState.isPlaying = false;
+        clearPlaylistBlobUrl();
+        playlistPlayer.pause();
+        playlistPlayer.removeAttribute("src");
+        stopPointsTimer();
+        if (!isMusicAlwaysOn) resumeShopMusic();
+    } else if (musicLibrary.nowPlayingIndex > removedIndex) {
+        musicLibrary.nowPlayingIndex--;
+    }
+    saveMusicLibrary();
+    renderMusicModule();
+}
+
+function sortPlaylistTracks(sortBy) {
+    const playlist = getActivePlaylist();
+    if (!playlist || isPurchasedPlaylist(playlist)) return;
+    const currentTrack = playlist.tracks[musicLibrary.nowPlayingIndex];
+    
+    if (sortBy === 'name') {
+        playlist.tracks.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'name-desc') {
+        playlist.tracks.sort((a, b) => b.name.localeCompare(a.name));
+    }
+    
+    const newIndex = playlist.tracks.findIndex(t => t.id === currentTrack?.id);
+    musicLibrary.nowPlayingIndex = newIndex >= 0 ? newIndex : -1;
+    saveMusicLibrary();
+    renderMusicModule();
+}
+
+function initAudioVisualizer() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (!analyser) {
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+    }
+    
+    try {
+        const source = audioContext.createMediaElementSource(playlistPlayer);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+    } catch(e) {
+        // Source already connected
+    }
+}
+
+function drawVisualizer() {
+    if (!visualizerCanvas || !visualizerCtx || !analyser) return;
+    
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteFrequencyData(dataArray);
+    
+    visualizerCtx.fillStyle = '#0a0a0a';
+    visualizerCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+    
+    const barWidth = (visualizerCanvas.width / bufferLength) * 2.5;
+    let barHeight;
+    let x = 0;
+    
+    for (let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i] / 2;
+        
+        const r = barHeight + 25 * (i / bufferLength);
+        const g = 250 * (i / bufferLength);
+        const b = 50;
+        
+        visualizerCtx.fillStyle = `rgb(${r},${g},${b})`;
+        visualizerCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight);
+        
+        x += barWidth + 1;
+    }
+    
+    visualizerAnimationId = requestAnimationFrame(drawVisualizer);
+}
+
+function startVisualizer() {
+    if (!visualizerCanvas) {
+        visualizerCanvas = document.getElementById('music-visualizer-canvas');
+        if (!visualizerCanvas) return;
+        visualizerCtx = visualizerCanvas.getContext('2d');
+        visualizerCanvas.width = visualizerCanvas.offsetWidth;
+        visualizerCanvas.height = visualizerCanvas.offsetHeight;
+    }
+    
+    initAudioVisualizer();
+    
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
+    if (visualizerAnimationId) {
+        cancelAnimationFrame(visualizerAnimationId);
+    }
+    
+    drawVisualizer();
+}
+
+function stopVisualizer() {
+    if (visualizerAnimationId) {
+        cancelAnimationFrame(visualizerAnimationId);
+        visualizerAnimationId = null;
+    }
+    if (visualizerCtx && visualizerCanvas) {
+        visualizerCtx.fillStyle = '#0a0a0a';
+        visualizerCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+    }
+}
+
+function renderMusicModule() {
+    syncPurchasedPlaylist();
+    const active = getActivePlaylist();
+    const trackTotal = active ? active.tracks.length : 0;
+    const currentTrackNumber = musicLibrary.nowPlayingIndex >= 0 ? musicLibrary.nowPlayingIndex + 1 : 0;
+    const isPlaying = musicPlayerState.isPlaying && musicLibrary.nowPlayingIndex >= 0;
+    const activeIsPurchased = isPurchasedPlaylist(active);
+
+    const playlistItems = musicLibrary.playlists.length
+        ? musicLibrary.playlists.map(p => `
+            <button class="music-playlist-item ${p.id === musicLibrary.activePlaylistId ? 'active' : ''} ${isPurchasedPlaylist(p) ? 'music-playlist-purchased' : ''}" onclick="playClickSound(); selectPlaylist('${p.id}')">
+                <span>➔ ${escapeHtml(p.name.toUpperCase())}</span>
+                <span>[${String(p.tracks.length).padStart(2, '0')}]</span>
+            </button>`).join('')
+        : `<div class="music-empty">${t('noPlaylistData')}</div>`;
+
+    const trackItems = active
+        ? (active.tracks.length
+            ? active.tracks.map((track, index) => `
+                <div class="music-track-item ${musicLibrary.nowPlayingIndex === index ? 'active' : ''} ${track.isPurchased ? 'music-track-purchased' : ''}">
+                    <span class="music-track-name" onclick="playClickSound(); playPlaylistTrack(${index})">
+                        <span class="music-track-index">[${padTrackNumber(index + 1)}]</span>➔ ${escapeHtml(track.name.toUpperCase())}
+                    </span>
+                    <div class="music-track-actions">
+                        <button class="music-mini-btn" onclick="playClickSound(); playPlaylistTrack(${index})">${t('loadBtn')}</button>
+                        ${track.isPurchased ? `<span class="music-owned-tag">${t('protectedTag')}</span>` : `<button class="music-mini-btn music-mini-btn-danger" onclick="playClickSound(); removeTrack('${track.id}')">${t('deleteBtn')}</button>`}
+                    </div>
+                </div>`).join('')
+            : `<div class="music-empty">${activeIsPurchased ? t('noPurchasedTracks') : t('emptyTape')}</div>`)
+        : `<div class="music-empty">${t('selectPlaylistHint')}</div>`;
+
+    const nowPlaying = active && musicLibrary.nowPlayingIndex >= 0 && active.tracks[musicLibrary.nowPlayingIndex]
+        ? `<span class="music-led on"></span>${t('nowPlayingPrefix')}<span class="highlight-system">${escapeHtml(active.tracks[musicLibrary.nowPlayingIndex].name.toUpperCase())}</span>`
+        : `<span class="music-led"></span>${t('noSignal')}`;
+
+    appsContentTarget.innerHTML = `
+        <div class="music-shell">
+            <div class="music-sidebar">
+                <div class="music-panel-header">${t('playlistRecordsTitle')}</div>
+                <div class="music-status-bar">${t('soundCoreLabel')} <span class="highlight-system">${t('onlineLabel')}</span><br>${t('archivesLabel')} <span class="highlight-system">${String(musicLibrary.playlists.length).padStart(2, '0')}</span></div>
+                <div class="music-create-row">
+                    <input id="new-playlist-name" class="music-input" type="text" placeholder="${t('newPlaylistPlaceholder')}" onclick="event.stopPropagation()">
+                    <button class="music-btn" onclick="playClickSound(); createPlaylist()">${t('createRecordBtn')}</button>
+                </div>
+                <div class="music-list retro-scroll">${playlistItems}</div>
+                ${activeIsPurchased ? '' : `<button class="music-btn music-btn-danger" onclick="playClickSound(); deleteActivePlaylist()">${t('deleteRecordBtn')}</button>`}
+            </div>
+            <div class="music-main">
+                <div class="music-panel-header">[ ${active ? escapeHtml(active.name.toUpperCase()) : t('trackArchiveDefault')} ]</div>
+                <div class="music-status-bar">
+                    ${t('exitLabel')} <span class="highlight-system">${isPlaying ? t('activeLabel') : t('standbyLabel')}</span>
+                    &nbsp;|&nbsp; ${t('trackLabel')} <span class="highlight-system">${padTrackNumber(currentTrackNumber || 0)}</span> / <span class="highlight-system">${padTrackNumber(trackTotal)}</span>
+                </div>
+                <div class="music-btn-row">
+                    ${activeIsPurchased ? '' : `<button class="music-btn" onclick="playClickSound(); addSongsToActivePlaylist()">${t('uploadFileBtn')}</button>`}
+                    <button class="music-btn" onclick="playClickSound(); togglePlaylistPlayback()">${isPlaying ? t('pauseBtn') : t('playBtn')}</button>
+                    <button class="music-btn" onclick="playClickSound(); playPrevTrack()">${t('prevBtn')}</button>
+                    <button class="music-btn" onclick="playClickSound(); playNextTrack()">${t('nextBtn')}</button>
+                </div>
+                ${!activeIsPurchased && active && active.tracks.length > 1 ? `
+                <div class="music-btn-row">
+                    <button class="music-btn" onclick="playClickSound(); sortPlaylistTracks('name')">${t('sortAZBtn')}</button>
+                    <button class="music-btn" onclick="playClickSound(); sortPlaylistTracks('name-desc')">${t('sortZABtn')}</button>
+                </div>` : ''}
+                <div id="music-block-notice" class="music-block-notice"></div>
+                <div class="music-now-playing">${nowPlaying}</div>
+                <div class="music-visualizer-container">
+                    <canvas id="music-visualizer-canvas" class="music-visualizer-canvas"></canvas>
+                </div>
+                <div class="music-list retro-scroll">${trackItems}</div>
+            </div>
+        </div>`;
+
+    const nameInput = document.getElementById("new-playlist-name");
+    if (nameInput) {
+        nameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { playClickSound(); createPlaylist(); }
+        });
+    }
+}
+
+playlistPlayer.addEventListener("ended", () => playNextTrack());
+playlistPlayer.addEventListener("pause", () => { musicPlayerState.isPlaying = false; });
+playlistPlayer.addEventListener("play", () => { musicPlayerState.isPlaying = true; });
+syncPlaylistPlayerVolume();
+
+function playClickSound() { if (!clickMuted) { try { clickSound.currentTime = 0; clickSound.play(); } catch(e) {} } }
+
+function runProgressBar() {
+    if (barPercent <= 100) {
+        let totalBlocks = 10, filledCount = Math.floor(barPercent / 10), emptyCount = totalBlocks - filledCount;
+        let filledBar = "█".repeat(filledCount), emptyBar = "░".repeat(emptyCount);
+        loadingBox.innerHTML = `INITIALIZING SYSTEMS...\n[${filledBar}${emptyBar}] ${barPercent}%`;
+        if (barPercent < 100) { barPercent += 20; setTimeout(runProgressBar, 180); } else {
+            setTimeout(() => { loadingBox.innerHTML = `SYSTEM READY.\n[██████████] 100%`; phase = "hold_ready";
+                setTimeout(() => { loadingBox.style.display = "none"; systemOpeningText.style.display = "block"; phase = "opening_text";
+                    setTimeout(() => { systemOpeningText.style.display = "none"; phase = "cinematic_darkness";
+                        setTimeout(() => { phase = "desktop"; smileOs.style.display = "block"; document.getElementById("system-stats-bar").style.display = "flex"; updatePointsDisplay(); playStartupAndShopMusic(); startClock(); startSystemStats(); }, 1000);
+                    }, 2000);
+                }, 2000);
+            }, 200);
+        }
+    }
+}
+
+document.addEventListener("click", () => {
+    if (phase === "waiting") {
+        applyBootMessagesFromStorage();
+        resetBootSequenceState();
+        startScreen.style.display = "none";
+        phase = "status";
+        try { bgMusic.volume = currentVolume * 0.8; bgMusic.play(); } catch(e) {}
+        render();
+        loop();
+        scheduleGlitch();
+    }
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && (phase === "status" || phase === "lore" || phase === "system" || phase === "hold_before_delete" || phase === "delete_lore" || phase === "delete_status" || phase === "hold_after_sys" || phase === "delete_sys" || phase === "loading_bar" || phase === "hold_ready" || phase === "opening_text" || phase === "cinematic_darkness")) {
+        skipIntro();
+    }
+});
+
+function skipIntro() {
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+    boot.innerHTML = "";
+    lore.innerHTML = "";
+    sys.innerHTML = "";
+    loadingBox.style.display = "none";
+    systemOpeningText.style.display = "none";
+    phase = "desktop";
+    smileOs.style.display = "block";
+    document.getElementById("system-stats-bar").style.display = "flex";
+    updatePointsDisplay();
+    playStartupAndShopMusic();
+    startClock();
+    startSystemStats();
+}
+
+function render() { boot.innerHTML = applyGlitch(statusLines.join("<br>")); lore.innerHTML = applyGlitch(loreLines.join("<br>")); sys.innerHTML = applyGlitch(sysLines.join("<br>")); }
+function applyGlitch(text) { if (!activeGlitch) return text; return text.replace(new RegExp(activeGlitch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g"), `<span class="glitch-word">${activeGlitch}</span>`); }
+
+function loop() {
+    if (phase === "status") { let txt = statusText[sLine]; statusLines[sLine] = txt.slice(0, sChar); render(); sChar++; if (sChar <= txt.length) { setTimeout(loop, 25); return; } sChar = 0; sLine++; if (sLine >= statusText.length) { phase = "lore"; setTimeout(loop, 100); return; } setTimeout(loop, 40); return; }
+    if (phase === "lore") { let txt = loreText[lLine]; loreLines[lLine] = txt.slice(0, lChar); render(); lChar++; if (lChar <= txt.length) { setTimeout(loop, 25); return; } lChar = 0; lLine++; if (lLine >= loreText.length) { phase = "hold_before_delete"; setTimeout(loop, 1200); return; } setTimeout(loop, 40); return; }
+    if (phase === "hold_before_delete") { phase = "delete_lore"; deleteLineIndex = loreText.length - 1; deleteCharIndex = loreText[deleteLineIndex].length; setTimeout(loop, 30); return; }
+    if (phase === "delete_lore") { if (deleteLineIndex >= 0) { let txt = loreText[deleteLineIndex]; loreLines[deleteLineIndex] = txt.slice(0, deleteCharIndex); render(); deleteCharIndex--; if (deleteCharIndex >= 0) { setTimeout(loop, 10); return; } deleteLineIndex--; if (deleteLineIndex >= 0) deleteCharIndex = loreText[deleteLineIndex].length; setTimeout(loop, 20); return; } else { phase = "delete_status"; deleteLineIndex = statusText.length - 1; deleteCharIndex = statusText[deleteLineIndex].length; setTimeout(loop, 30); return; } }
+    if (phase === "delete_status") { if (deleteLineIndex >= 0) { let txt = statusText[deleteLineIndex]; statusLines[deleteLineIndex] = txt.slice(0, deleteCharIndex); render(); deleteCharIndex--; if (deleteCharIndex >= 0) { setTimeout(loop, 10); return; } deleteLineIndex--; if (deleteLineIndex >= 0) deleteCharIndex = statusText[deleteLineIndex].length; setTimeout(loop, 20); return; } else { phase = "system"; setTimeout(loop, 300); return; } }
+    if (phase === "system") { let txt = sysText[sysIndex]; sysLines[sysIndex] = txt.slice(0, sysChar); render(); sysChar++; if (sysChar <= txt.length) { setTimeout(loop, 25); return; } sysChar = 0; sysIndex++; if (sysIndex >= sysText.length) { phase = "hold_after_sys"; setTimeout(loop, 1200); return; } setTimeout(loop, 80); return; }
+    if (phase === "hold_after_sys") { phase = "delete_sys"; deleteLineIndex = sysText.length - 1; deleteCharIndex = sysText[deleteLineIndex].length; setTimeout(loop, 30); return; }
+    if (phase === "delete_sys") { if (deleteLineIndex >= 0) { let txt = sysText[deleteLineIndex]; sysLines[deleteLineIndex] = txt.slice(0, deleteCharIndex); render(); deleteCharIndex--; if (deleteCharIndex >= 0) { setTimeout(loop, 10); return; } deleteLineIndex--; if (deleteLineIndex >= 0) deleteCharIndex = sysText[deleteLineIndex].length; setTimeout(loop, 20); return; } else { phase = "loading_bar"; loadingBox.style.display = "block"; runProgressBar(); return; } }
+}
+
+function scheduleGlitch() { setTimeout(function run() { randomGlitch(); setTimeout(run, 3000 + Math.random() * 3000); }, 2000); }
+function randomGlitch() { if (phase !== "status" && phase !== "lore" && phase !== "system") return; const pool = []; const allText = statusLines.join(" ") + loreLines.join(" ") + sysLines.join(" "); for (let w of glitchTargets) { if (allText.includes(w)) pool.push(w); } if (!pool.length) return; activeGlitch = pool[Math.floor(Math.random() * pool.length)]; render(); setTimeout(() => { activeGlitch = ""; render(); }, 70); }
+
+function toggleFlicker(cb) { isFlickerEnabled = cb.checked; isFlickerEnabled ? document.body.classList.add("flicker-active") : document.body.classList.remove("flicker-active"); localStorage.setItem('smileos_flicker', isFlickerEnabled); }
+function changeSystemTheme(hex) { if (!hex) return; selectedThemeColor = hex; document.documentElement.style.setProperty('--dynamic-theme-color', hex); localStorage.setItem('smileos_theme', hex); }
+function updateSystemVolume(val) {
+    currentVolume = parseFloat(val);
+    const musicVol = musicMuted ? 0 : currentVolume;
+    bgMusic.volume = isIntroPhase() ? currentVolume * 0.8 : musicVol * 0.8;
+    startupSound.volume = musicVol;
+    shopMusic.volume = musicVol;
+    shopMusic2.volume = musicVol;
+    shopMusic3.volume = musicVol;
+    clickSound.volume = currentVolume;
+    okSound.volume = currentVolume;
+    errorSound.volume = currentVolume;
+    if (shopDrawerSound) shopDrawerSound.volume = currentVolume;
+    if (minosSound1) minosSound1.volume = currentVolume;
+    if (minosSound2) minosSound2.volume = currentVolume;
+    if (minosSound3) minosSound3.volume = currentVolume;
+    if (minosSound4) minosSound4.volume = currentVolume;
+    if (sisyphusSound1) sisyphusSound1.volume = currentVolume;
+    if (sisyphusSound2) sisyphusSound2.volume = currentVolume;
+    if (shopPreviewPlayer) shopPreviewPlayer.volume = musicMuted ? 0 : currentVolume;
+    syncPlaylistPlayerVolume();
+    const volIndicator = document.getElementById("vol-indicator");
+    if (volIndicator) volIndicator.innerText = Math.floor(currentVolume * 100) + "%";
+    localStorage.setItem('smileos_volume', currentVolume);
+}
+function changeShopMusic(filename) {
+    selectedShopMusic = filename;
+    localStorage.setItem('smileos_shop_music', filename);
+    shopMusic.pause();
+    shopMusic2.pause();
+    shopMusic3.pause();
+    if (!musicMuted) {
+        if (selectedShopMusic === "Shopmusic.ogg") shopMusic.play();
+        else if (selectedShopMusic === "Shopmusic3.ogg") shopMusic2.play();
+        else if (selectedShopMusic === "Shopmusic4.ogg") shopMusic3.play();
+    }
+}
+function toggleMusicAlwaysOn(cb) { isMusicAlwaysOn = cb.checked; localStorage.setItem('smileos_music_always_on', isMusicAlwaysOn); }
+function toggleLoopMode(cb) { isLoopEnabled = cb.checked; localStorage.setItem('smileos_loop_enabled', isLoopEnabled); if (playlistPlayer) playlistPlayer.loop = isLoopEnabled; }
+function toggleShuffleMode(cb) { isShuffleEnabled = cb.checked; localStorage.setItem('smileos_shuffle_enabled', isShuffleEnabled); }
+function toggleMusicMute(cb) {
+    musicMuted = cb.checked;
+    localStorage.setItem('smileos_music_muted', musicMuted);
+    updateSystemVolume(currentVolume);
+    if (musicMuted) {
+        if (!isIntroPhase()) bgMusic.pause();
+        startupSound.pause();
+        stopShopMusic();
+    } else if (phase === "desktop" && !musicPlayerState.isPlaying) {
+        resumeShopMusic();
+    }
+}
+function toggleClickMute(cb) { clickMuted = cb.checked; localStorage.setItem('smileos_click_muted', clickMuted); }
+
+function toggleSkipIntro(cb) {
+    skipIntroOnLaunch = cb.checked;
+    localStorage.setItem('smileos_skip_intro', skipIntroOnLaunch);
+}
+
+function launchDesktopDirect() {
+    startScreen.style.display = "none";
+    boot.innerHTML = "";
+    lore.innerHTML = "";
+    sys.innerHTML = "";
+    loadingBox.style.display = "none";
+    systemOpeningText.style.display = "none";
+    phase = "desktop";
+    smileOs.style.display = "block";
+    document.getElementById("system-stats-bar").style.display = "flex";
+    updatePointsDisplay();
+    playStartupAndShopMusic();
+    startClock();
+    startSystemStats();
+}
+
+function updateClock() {
+    const now = new Date();
+    const timeEl = document.getElementById("clock-time");
+    const dateEl = document.getElementById("clock-date");
+    
+    if (timeEl && dateEl) {
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        
+        timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        dateEl.textContent = `${day}.${month}.${year}`;
+    }
+}
+
+function startClock() {
+    updateClock();
+    setInterval(updateClock, 1000);
+}
+
+async function updateSystemStats() {
+    try {
+        const stats = await ipcRenderer.invoke('get-system-stats');
+        const cpuEl = document.getElementById("cpu-usage");
+        const ramEl = document.getElementById("ram-usage");
+        
+        if (cpuEl && stats.cpu !== undefined) {
+            cpuEl.textContent = `${Math.round(stats.cpu)}%`;
+        }
+        if (ramEl && stats.ram !== undefined) {
+            ramEl.textContent = `${Math.round(stats.ram)}%`;
+        }
+    } catch(e) {
+        // Fallback to simulated values if IPC fails
+        const cpuEl = document.getElementById("cpu-usage");
+        const ramEl = document.getElementById("ram-usage");
+        if (cpuEl) cpuEl.textContent = `${Math.round(Math.random() * 30 + 10)}%`;
+        if (ramEl) ramEl.textContent = `${Math.round(Math.random() * 20 + 40)}%`;
+    }
+}
+
+function startSystemStats() {
+    updateSystemStats();
+    setInterval(updateSystemStats, 2000);
+}
+
+function resetContentPanelLayout() {
+    appsContentTarget.style.padding = "30px";
+    appsContentTarget.style.justifyContent = "center";
+    appsContentTarget.style.alignItems = "center";
+    appsContentTarget.style.overflow = "auto";
+    appsContentTarget.classList.remove("shop-mode", "settings-mode");
+}
+
+function applySettingsPanelLayout() {
+    appsContentTarget.style.padding = "0";
+    appsContentTarget.style.justifyContent = "flex-start";
+    appsContentTarget.style.alignItems = "stretch";
+    appsContentTarget.style.overflow = "hidden";
+    appsContentTarget.classList.remove("shop-mode");
+    appsContentTarget.classList.add("settings-mode");
+}
+
+function showApplicationsMenu() {
+    if (activeModule === 'shop') stopShopPreview(false);
+    activeModule = 'apps';
+    panelTitleTarget.innerHTML = t('navApps');
+    appsSidebar.style.display = "flex";
+    appsContentTarget.style.width = "60%";
+    resetContentPanelLayout();
+    appsContentTarget.innerHTML = `<div class="content-center"><span class="highlight-system">${t('systemReady')}</span></div>`;
+}
+
+function resolveBrowserUrl(input) {
+    const query = input.trim();
+    if (!query) return "https://www.google.com";
+    if (/^https?:\/\//i.test(query)) return query;
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i.test(query)) return "https://" + query;
+    return "https://www.google.com/search?q=" + encodeURIComponent(query);
+}
+
+function navigateBrowser(input) {
+    const url = resolveBrowserUrl(input);
+    const webview = document.getElementById("browser-webview");
+    const home = document.getElementById("browser-home");
+    const toolbarInput = document.getElementById("browser-url-input");
+    if (!webview) return;
+    home.style.display = "none";
+    webview.classList.add("active");
+    webview.src = url;
+    if (toolbarInput) toolbarInput.value = url;
+}
+
+function triggerBrowserMascot() {
+    const img = document.getElementById("browser-mascot");
+    if (img) {
+        img.classList.remove("wobble");
+        void img.offsetWidth;
+        img.classList.add("wobble");
+        setTimeout(() => img.classList.remove("wobble"), 520);
+    }
+    const sounds = [minosSound1, minosSound2, minosSound3, minosSound4].filter(Boolean);
+    if (!sounds.length) return;
+    const pick = sounds[Math.floor(Math.random() * sounds.length)];
+    try {
+        pick.currentTime = 0;
+        pick.volume = currentVolume;
+        pick.play();
+    } catch(e) {}
+}
+
+function triggerSisyphusMascot() {
+    const img = document.getElementById("sisyphus-mascot");
+    if (img) {
+        img.classList.remove("wobble");
+        void img.offsetWidth;
+        img.classList.add("wobble");
+        setTimeout(() => img.classList.remove("wobble"), 520);
+    }
+    const sounds = [sisyphusSound1, sisyphusSound2].filter(Boolean);
+    if (!sounds.length) return;
+    const pick = sounds[Math.floor(Math.random() * sounds.length)];
+    try {
+        pick.currentTime = 0;
+        pick.volume = currentVolume;
+        pick.play();
+    } catch(e) {}
+}
+
+function initBrowserModule() {
+    const searchInput = document.getElementById("browser-search-input");
+    const toolbarInput = document.getElementById("browser-url-input");
+    const webview = document.getElementById("browser-webview");
+
+    searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { playClickSound(); navigateBrowser(searchInput.value); }
+    });
+    toolbarInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { playClickSound(); navigateBrowser(toolbarInput.value); }
+    });
+    webview.addEventListener("did-navigate", (e) => { toolbarInput.value = e.url; });
+    webview.addEventListener("did-navigate-in-page", (e) => { toolbarInput.value = e.url; });
+}
+
+function showSubContent(type) {
+    panelTitleTarget.innerHTML = t('appsBreadcrumb') + type.toUpperCase();
+    if (type === 'oyunlar') {
+        appsContentTarget.innerHTML = `<div class="content-center"><button class="game-btn" onclick="playClickSound(); ipcRenderer.send('launch-app', 'oyunlar')">${t('gamesFolderBtn')}</button></div>`;
+    } else {
+        appsContentTarget.innerHTML = `<div class="content-center">${t('extraPanelPlaceholder')}</div>`;
+    }
+}
+
+function showStaticModule(cat) {
+    if (activeModule === 'shop' && cat !== 'shop') stopShopPreview(false);
+    activeModule = cat;
+    appsSidebar.style.display = "none";
+    appsContentTarget.style.width = "100%";
+
+    if (cat === 'browser') {
+        panelTitleTarget.innerHTML = t('browserTitle');
+        appsContentTarget.style.padding = "0";
+        appsContentTarget.style.justifyContent = "stretch";
+        appsContentTarget.style.alignItems = "stretch";
+        appsContentTarget.innerHTML = `
+            <div class="browser-shell">
+                <div class="browser-toolbar">
+                    <button class="browser-nav-btn" onclick="playClickSound(); document.getElementById('browser-webview').goBack()">◀</button>
+                    <button class="browser-nav-btn" onclick="playClickSound(); document.getElementById('browser-webview').goForward()">▶</button>
+                    <button class="browser-nav-btn" onclick="playClickSound(); document.getElementById('browser-webview').reload()">↻</button>
+                    <button class="browser-nav-btn" onclick="playClickSound(); document.getElementById('browser-home').style.display='flex'; document.getElementById('browser-webview').classList.remove('active'); document.getElementById('browser-search-input').focus();">⌂</button>
+                    <input id="browser-url-input" class="browser-input" type="text" placeholder="${t('urlPlaceholder')}" onclick="event.stopPropagation()">
+                    <button class="browser-go-btn" onclick="playClickSound(); navigateBrowser(document.getElementById('browser-url-input').value)">${t('goBtn')}</button>
+                </div>
+                <div id="browser-home" class="browser-home">
+                    <div class="browser-logo">Smile<span>Search</span></div>
+                    <div class="browser-search-row">
+                        <input id="browser-search-input" class="browser-input" type="text" placeholder="${t('searchPlaceholder')}" onclick="event.stopPropagation()">
+                        <button class="browser-go-btn" onclick="playClickSound(); navigateBrowser(document.getElementById('browser-search-input').value)">${t('searchBtn')}</button>
+                    </div>
+                    <div class="browser-mascot-wrap">
+                        <img id="browser-mascot" class="browser-mascot" src="images/picmix.com_2523985.png" alt="Terminal Mascot" onclick="event.stopPropagation(); playClickSound(); triggerBrowserMascot();">
+                        ${isCharacterOwned('char-sisyphus') ? '<img id="sisyphus-mascot" class="browser-mascot" src="images/SisyphusPrime8K.webp" alt="Sisyphus Prime Mascot" onclick="event.stopPropagation(); playClickSound(); triggerSisyphusMascot();">' : ''}
+                    </div>
+                    <div class="browser-hint">${t('hellNetConnected')}</div>
+                </div>
+                <webview id="browser-webview" class="browser-webview" src="about:blank"></webview>
+            </div>`;
+        initBrowserModule();
+        setTimeout(() => document.getElementById("browser-search-input").focus(), 50);
+    }
+    else if (cat === 'settings') {
+        applySettingsPanelLayout();
+        panelTitleTarget.innerHTML = t('settingsTitle');
+        renderSettingsModule();
+    }
+    else if (cat === 'shop') {
+        appsContentTarget.style.padding = "0";
+        appsContentTarget.style.justifyContent = "stretch";
+        appsContentTarget.style.alignItems = "stretch";
+        appsContentTarget.style.overflow = "hidden";
+        appsContentTarget.classList.add("shop-mode");
+        panelTitleTarget.innerHTML = t('shopTitle');
+        renderShopModule();
+    }
+    else if (cat === 'music') {
+        appsContentTarget.style.padding = "0";
+        appsContentTarget.style.justifyContent = "stretch";
+        appsContentTarget.style.alignItems = "stretch";
+        panelTitleTarget.innerHTML = t('musicTitle');
+        renderMusicModule();
+    }
+}
+
+applyPersistedSettings();
+applyStaticTranslations();
+applyBootMessagesFromStorage();
+if (skipIntroOnLaunch) launchDesktopDirect();
+</script>
+
+</body>
+</html>
