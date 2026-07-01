@@ -37,7 +37,7 @@ This project is open-source and welcomes contributions! Feel free to fork and mo
 
 \### 📥 Installation
 
-To get the full experience including soundtracks, please download the ready-to-use version from the \*\*\[Releases Page](https://github.com/YOUR\_USERNAME/SmileOS2/releases)\*\*.
+To get the full experience including soundtracks, please download the ready-to-use version from the \*\*\[Releases Page](https://github.com/emir-ULTRAKILL/SmileOS2-BETA/releases)\*\*.
 
 
 
@@ -94,7 +94,7 @@ Bu proje açık kaynaklıdır ve katkılarınızı bekliyoruz! İstediğiniz gib
 
 \### 📥 Kurulum
 
-Müzik ve ses efektlerini içeren tam sürümü indirmek için lütfen \*\*\[Releases Sayfasına](https://github.com/YOUR\_USERNAME/SmileOS2/releases)\*\* gidin.
+Müzik ve ses efektlerini içeren tam sürümü indirmek için lütfen \*\*\[Releases Sayfasına](https://github.com/emir-ULTRAKILL/SmileOS2-BETA/releases)\*\* gidin.
 
 
 
@@ -122,26 +122,22 @@ Emeğe saygı duyduğunuz ve çalışmalarımı desteklediğiniz için teşekkü
 
 
 
-\### 💻 Developer Quick-Start (Geliştiriciler İçin)
+### 💻 Developer Quick-Start (Geliştiriciler İçin)
+
+Projenin kodlarını kendi bilgisayarınızda çalıştırmak için şunları yapın:
 
 ```bash
+# Repo'yu klonlayın
+git clone [https://github.com/emir-ULTRAKILL/SmileOS2-BETA.git.](https://github.com/emir-ULTRAKILL/SmileOS2-BETA.git)
 
-\# Clone the repository
+# Klasöre girin/Go to file
+cd SmileOS2
 
-git clone \[https://github.com/YOUR\_USERNAME/SmileOS2.git](https://github.com/YOUR\_USERNAME/SmileOS2.git)
-
-
-
-\# Install dependencies
-
+# Gereksinimleri yükleyin/İnstall important things
 npm install
 
-
-
-\# Start the application
-
+# Uygulamayı başlatın/Start the app
 npm start
-
 
 ## ⚖️ License
 This project is licensed under **CC BY-NC 4.0**.
